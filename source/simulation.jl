@@ -14,19 +14,6 @@ struct ModelSolution
     endo_names::Vector{String}
 end
 
-# --- HP Filter (Lambda=1600) ---
-function hp_filter(y::Vector{Float64}, lambda::Float64=1600.0)
-    n = length(y)
-    if n < 3 return zeros(n) end
-    D = zeros(n-2, n)
-    for i in 1:n-2
-        D[i, i] = 1.0; D[i, i+1] = -2.0; D[i, i+2] = 1.0
-    end
-    A = I + lambda * (D' * D)
-    trend = A \ y
-    return y - trend
-end
-
 # --- Compute Statistics ---
 function compute_moments(sim_data::Matrix{Float64}, var_names::Vector{String})
     T, n_vars = size(sim_data)
