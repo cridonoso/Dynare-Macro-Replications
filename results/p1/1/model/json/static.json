@@ -1,0 +1,35 @@
+{"static_model": {"model_local_variables": [], "external_functions_temporary_terms_": [], "temporary_terms_": [], 
+"residuals":[
+{"residual": {"lhs": "1/c", "rhs": "1/c*beta*(alpha*exp(a)*k^(alpha-1)*h^(1-alpha)+1-delta)"}}
+, {"residual": {"lhs": "c*gamma/(1-h)", "rhs": "exp(a)*(1-alpha)*k^alpha*h^(-alpha)"}}
+, {"residual": {"lhs": "c+k-k*(1-delta)", "rhs": "h^(1-alpha)*exp(a)*k^alpha"}}
+, {"residual": {"lhs": "y", "rhs": "h^(1-alpha)*exp(a)*k^alpha"}}
+, {"residual": {"lhs": "i", "rhs": "y-c"}}
+, {"residual": {"lhs": "a", "rhs": "a*rho+e"}}
+, {"residual": {"lhs": "productivity", "rhs": "y/h"}}
+
+]
+, "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 7, "ncols": 7, "entries": [{"eq": 1, "col": 2, "var": "c", "val": "(-1)/(c*c)-(alpha*exp(a)*k^(alpha-1)*h^(1-alpha)+1-delta)*beta*(-1)/(c*c)"}
+, {"eq": 1, "col": 3, "var": "k", "val": "(-(1/c*beta*h^(1-alpha)*alpha*exp(a)*get_power_deriv(k,alpha-1,1)))"}
+, {"eq": 1, "col": 5, "var": "h", "val": "(-(1/c*beta*alpha*exp(a)*k^(alpha-1)*get_power_deriv(h,1-alpha,1)))"}
+, {"eq": 1, "col": 6, "var": "a", "val": "(-(1/c*beta*alpha*exp(a)*k^(alpha-1)*h^(1-alpha)))"}
+, {"eq": 2, "col": 2, "var": "c", "val": "gamma/(1-h)"}
+, {"eq": 2, "col": 3, "var": "k", "val": "(-(h^(-alpha)*exp(a)*(1-alpha)*get_power_deriv(k,alpha,1)))"}
+, {"eq": 2, "col": 5, "var": "h", "val": "c*gamma/((1-h)*(1-h))-exp(a)*(1-alpha)*k^alpha*get_power_deriv(h,(-alpha),1)"}
+, {"eq": 2, "col": 6, "var": "a", "val": "(-(exp(a)*(1-alpha)*k^alpha*h^(-alpha)))"}
+, {"eq": 3, "col": 2, "var": "c", "val": "1"}
+, {"eq": 3, "col": 3, "var": "k", "val": "1-(1-delta)-h^(1-alpha)*exp(a)*get_power_deriv(k,alpha,1)"}
+, {"eq": 3, "col": 5, "var": "h", "val": "(-(exp(a)*k^alpha*get_power_deriv(h,1-alpha,1)))"}
+, {"eq": 3, "col": 6, "var": "a", "val": "(-(h^(1-alpha)*exp(a)*k^alpha))"}
+, {"eq": 4, "col": 1, "var": "y", "val": "1"}
+, {"eq": 4, "col": 3, "var": "k", "val": "(-(h^(1-alpha)*exp(a)*get_power_deriv(k,alpha,1)))"}
+, {"eq": 4, "col": 5, "var": "h", "val": "(-(exp(a)*k^alpha*get_power_deriv(h,1-alpha,1)))"}
+, {"eq": 4, "col": 6, "var": "a", "val": "(-(h^(1-alpha)*exp(a)*k^alpha))"}
+, {"eq": 5, "col": 1, "var": "y", "val": "(-1)"}
+, {"eq": 5, "col": 2, "var": "c", "val": "1"}
+, {"eq": 5, "col": 4, "var": "i", "val": "1"}
+, {"eq": 6, "col": 6, "var": "a", "val": "1-rho"}
+, {"eq": 7, "col": 1, "var": "y", "val": "(-(1/h))"}
+, {"eq": 7, "col": 5, "var": "h", "val": "(-((-y)/(h*h)))"}
+, {"eq": 7, "col": 7, "var": "productivity", "val": "1"}
+]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 7, "ncols": 49, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 7, "ncols": 343, "entries": []}}}

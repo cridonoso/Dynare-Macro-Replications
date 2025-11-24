@@ -1,0 +1,15 @@
+{"steady_state_model": [{"lhs": "lambda", "rhs":"1"}
+,{"lhs": "h", "rhs":"0.3333333333333333"}
+,{"lhs": "X", "rhs":"(1-h)/eta"}
+,{"lhs": "L", "rhs":"1-h"}
+,{"lhs": "k_y_ratio", "rhs":"theta/(1/beta-(1-delta))"}
+,{"lhs": "y", "rhs":"h*k_y_ratio^(theta/(1-theta))"}
+,{"lhs": "k", "rhs":"k_y_ratio*y"}
+,{"lhs": "invest", "rhs":"delta*k"}
+,{"lhs": "c", "rhs":"y-invest"}
+,{"lhs": "productivity", "rhs":"y/h"}
+,{"lhs": "term_labor_benefit", "rhs":"(1-theta)*y/h/c"}
+,{"lhs": "denom_A", "rhs":"a_0+eta*beta*(1-a_0)/(1-beta*(1-eta))"}
+,{"lhs": "A", "rhs":"(1-h)*term_labor_benefit/denom_A"}
+,{"lhs": "mu", "rhs":"(1-a_0)*eta*beta*A/((1-h)*(1-beta*(1-eta)))"}
+]}
