@@ -3,105 +3,85 @@ using DataFrames
 using PrettyTables
 using Printf
 
-# -------------------------------------------------------------------------
-# CONFIGURATION
-# -------------------------------------------------------------------------
-# Adjust this path to point to your specific model result folder (e.g., results/p1/1)
-# For automation across all models, you can wrap this in a loop or pass arguments.
-target_model = "1" # Change this to "2", "3", etc.
+# --- Parse Args ---
+target_model = "1"
+idx = findfirst(x -> x == "--model" || x == "-m", ARGS)
+if idx !== nothing && idx < length(ARGS)
+    target_model = ARGS[idx+1]
+end
+
+# --- Paths ---
 results_path = joinpath(@__DIR__, "..", "results", "p1", target_model)
 csv_file = joinpath(results_path, "moments_summary.csv")
 
 if !isfile(csv_file)
-    error("Summary CSV not found: $csv_file. Run the simulation first.")
+    error("CSV not found for Model $target_model. Run simulation first.")
 end
 
-# -------------------------------------------------------------------------
-# LOAD AND PROCESS DATA
-# -------------------------------------------------------------------------
 df = CSV.read(csv_file, DataFrame)
 
-# Helper function to extract a value given a statistic row and variable column
-function get_val(stat_name, var_name)
-    # Find row
-    row = filter(r -> r.Statistic == stat_name, df)
-    if isempty(row)
-        return NaN
-    end
-    # Find column (case insensitive check if needed, but CSV usually matches model)
-    if string(var_name) in names(df)
-        return row[1, Symbol(var_name)]
-    else
-        # Handle potential name mismatches (e.g., 'invest' vs 'i')
-        # Add mappings if necessary
-        return NaN
-    end
+# --- Helpers ---
+function get_val(stat, var)
+    row = filter(r -> r.Statistic == stat, df)
+    if isempty(row) return NaN end
+    # Check symbol existence
+    if string(var) in names(df) return row[1, Symbol(var)] end
+    return NaN
 end
 
-# Define the mapping for your model variables to the Table 3 labels
-# Adjust the values on the RIGHT to match your .mod variable names
+# --- Variable Mapping ---
 var_map = Dict(
-    "y" => "y",
-    "c" => "c",
-    "i" => "i",   # or "invest" for model 3
-    "h" => "h",
-    "w" => "w",   # Real wage (MPL), usually not in basic RBC mod but calculable
-    "r" => "r"    # Real interest rate
+    "y" => "y", 
+    "c" => "c", 
+    "i" => "i", 
+    "h" => "h", 
+    "productivity" => "productivity",
+    "yM" => "yM", 
+    "hM" => "hM"
 )
 
-# Special handling for Model 3 which uses 'invest' instead of 'i'
-if "invest" in names(df)
-    var_map["i"] = "invest"
+if "invest" in names(df) 
+    var_map["i"] = "invest" 
 end
 
-# -------------------------------------------------------------------------
-# BUILD TABLE DATA
-# -------------------------------------------------------------------------
-# We want rows: y, c, i, h, etc.
-# Columns: Standard Deviation, Relative Std Dev, Correlation with Output
+# --- Build Table ---
+vars_preference = ["y", "yM", "c", "i", "h", "hM", "productivity"]
 
-variables_to_show = ["y", "c", "i", "h"] 
-# Add productivity 'p' if available (y/h)
-if "productivity" in names(df)
-    push!(variables_to_show, "productivity")
-end
+# Filtramos: Que esté en el mapa Y que exista en el CSV generado
+vars_to_show = filter(v -> haskey(var_map, v) && (var_map[v] in names(df)), vars_preference)
 
-table_data = Matrix{Any}(undef, length(variables_to_show), 4)
+data = Matrix{Any}(undef, length(vars_to_show), 4)
 
-for (i, v) in enumerate(variables_to_show)
-    mod_var = get(var_map, v, v) # Get model variable name
+for (i, v) in enumerate(vars_to_show)
+    m_var = var_map[v]
     
-    # 1. Variable Name
-    table_data[i, 1] = v
+    label = (v == "productivity") ? "p (y/h)" : v
+    data[i, 1] = label
     
-    # 2. Standard Deviation (in percent, so * 100)
-    val_std = get_val("StdDev", mod_var) * 100
-    table_data[i, 2] = @sprintf("%.2f", val_std)
+    # 1. Std Dev (Percent)
+    val = get_val("StdDev", m_var) * 100
+    data[i, 2] = @sprintf("%.2f", val)
     
-    # 3. Relative Std Dev (sigma_x / sigma_y)
-    if v == "y"
-        table_data[i, 3] = "1.00"
+    # 2. Rel Std Dev
+    if v == "y" || v == "yM"
+        data[i, 3] = "1.00"
     else
-        val_rel = get_val("RelStdDev", mod_var)
-        table_data[i, 3] = @sprintf("%.2f", val_rel)
+        val = get_val("RelStdDev", m_var)
+        data[i, 3] = @sprintf("%.2f", val)
     end
     
-    # 4. Correlation with Y
-    val_corr = get_val("CorrWithY", mod_var)
-    table_data[i, 4] = @sprintf("%.2f", val_corr)
+    # 3. Correlation
+    val = get_val("CorrWithY", m_var)
+    data[i, 4] = @sprintf("%.2f", val)
 end
 
-# -------------------------------------------------------------------------
-# PRINT TABLE
-# -------------------------------------------------------------------------
-header = ["Variable", "Standard Deviation (%)", "Relative Std Dev", "Correlation with Y"]
+# --- Output ---
+header = ["Variable", "Std Dev (%)", "Rel Std Dev", "Corr with Y"]
+println("\nTable 3 Statistics - Model $target_model")
+pretty_table(data; header=header, crop=:none, alignment=:c)
 
-println("\nTable 3: Standard Deviations and Correlations with Output (Model $target_model)")
-pretty_table(table_data; header=header, crop=:none, alignment=:c)
-
-# Optional: Save to LaTeX
-latex_file = joinpath(results_path, "table_3_model_$(target_model).tex")
-open(latex_file, "w") do f
-    pretty_table(f, table_data; header=header, backend=Val(:latex))
+tex_path = joinpath(results_path, "table_model_$(target_model).tex")
+open(tex_path, "w") do f
+    pretty_table(f, data; header=header, backend=Val(:latex))
 end
-println("\nLaTeX table saved to: $latex_file")
+println("\nLaTeX saved to: $tex_path")
