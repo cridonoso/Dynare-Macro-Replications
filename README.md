@@ -21,7 +21,10 @@ Pkg.instantiate()    # Download and Install all dependencies from Manifest.toml
 ### Running the Code
 
 #### Question 1
+<details>
+  <summary>Click to see instructions</summary>
 To run Dynare, perform the Monte Carlo simulations, and generate the histograms for a specific model, run the following command from your terminal:
+
 ```bash
 # Syntax: julia --project=. presentation/run_project_p1.jl --model <ID>
 julia --project=. presentation/run_project_p1.jl --model 1
@@ -31,17 +34,26 @@ julia --project=. presentation/run_project_p1.jl --model 1
 
 ##### Generate LaTeX Tables
 To generate the formatted statistics table (replicating Table 3 from Hansen & Wright) based on the simulation results:
+
 ```bash
 # Syntax: julia --project=. presentation/generate_table.jl --model <ID>
 julia --project=. presentation/generate_table.jl --model 1
 ```
 - Output: This prints the table to the console and saves a `.tex` file in the `/results` folder.
 
+</details>
+
 #### Question 2
+<details>
+  <summary>Click to see instructions</summary>
 TBD
+</details>
 
 #### Question 3
+<details>
+  <summary>Click to see instructions</summary>
 TBD
+</details>
 
 ## Project Structure
 ```
