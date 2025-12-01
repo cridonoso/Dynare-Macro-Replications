@@ -1,5 +1,6 @@
-/* Modelo RBC Non separable leisure*/
+/* RBC Model with Non-separable Leisure */
 
+// 1. Variable and Parameter Declaration
 var c $c$ (long_name='consumption')
     y $y$ (long_name='output')
     h $h$ (long_name='hours')
@@ -7,8 +8,8 @@ var c $c$ (long_name='consumption')
     invest $i$ (long_name='investment')
     lambda $\lambda$ (long_name='TFP')
     productivity ${\frac{y}{h}}$ (long_name='Productivity')
-    L $L$ (long_name='ocio')
-    X $X$ (long_name='stock de ocio')
+    L $L$ (long_name='leisure services')
+    X $X$ (long_name='stock of leisure')
     mu $\mu$ (long_name='lagrange multiplier');
 
 varexo eps_a;
@@ -18,9 +19,9 @@ parameters beta $\beta$ (long_name='discount factor')
     theta $\theta$ (long_name='capital share')
     rho $\rho$ (long_name='AR coefficient TFP')
     A $A$ (long_name='labor disutility parameter')
-    h_0 ${h_0}$ (long_name='full time workers in steady state')
+    h_ss ${h_ss}$ (long_name='steady state hours')
     sigma_eps $\sigma_e$ (long_name='TFP shock volatility')
-    eta $\eta$ (long_name='depreciación del ocio')
+    eta $\eta$ (long_name='leisure depreciation rate')
     a_0 $a_0$ (long_name='peso del ocio actual')
     ;
 
@@ -31,11 +32,12 @@ theta = 0.36;
 rho = 0.95;
 A = 2;
 sigma_eps=0.00712;
-h_0=0.53;
+h_ss=1/3;
 a_0=0.35;
 eta=0.10;
 
 model;
+// 3. Model Equations
 //1. Euler Equation
 1/c = beta*((1/c(+1))*(theta*(y(+1)/k) +(1-delta)));
 //2. Labor FOC
@@ -58,9 +60,10 @@ log(lambda) = rho*log(lambda(-1)) + eps_a;
 productivity= y/h;
 end;
 
+// 4. Steady State Calculation
 steady_state_model;
 lambda = 1;
-h = 1/3;
+h = h_ss;
 X = (1-h)/eta;
 L = 1-h;
 k_y_ratio = theta / (1/beta - (1-delta));
@@ -77,10 +80,12 @@ end;
 
 steady;
 
+// 5. Shocks and Simulation
 shocks;
 var eps_a; stderr sigma_eps;
 end;
 
 check;
 steady;
+
 stoch_simul(order=1,irf=20,loglinear,hp_filter=1600,periods=200) y c invest k h productivity;

@@ -1,5 +1,5 @@
 {"steady_state_model": [{"lhs": "lambda", "rhs":"1"}
-,{"lhs": "h", "rhs":"0.3333333333333333"}
+,{"lhs": "h", "rhs":"h_ss"}
 ,{"lhs": "k_y_ratio", "rhs":"theta/(1/beta-(1-delta))"}
 ,{"lhs": "y", "rhs":"h*k_y_ratio^(theta/(1-theta))"}
 ,{"lhs": "k", "rhs":"k_y_ratio*y"}

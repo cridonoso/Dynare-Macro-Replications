@@ -4,7 +4,7 @@
 function steady_state!(ys_::Vector{<: Real}, exo_::Vector{<: Real}, params::Vector{<: Real})
 @inbounds begin
     ys_[6]=1;
-    ys_[3]=0.3333333333333333;
+    ys_[3]=params[6];
     ys_[9]=(1-ys_[3])/params[8];
     ys_[8]=1-ys_[3];
     k_y_ratio=params[3]/(1/params[1]-(1-params[2]));

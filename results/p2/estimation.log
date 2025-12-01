@@ -1,0 +1,7 @@
+Dynare version: 0.10.4
+2025-11-30T19:57:43.941: Starting @dynare estimation.mod
+["estimation.mod", "language=julia", "json=compute", "notmpterms"]
+Dynare preprocessor version: 7.0.0+0
+2025-11-30T19:57:44.044: End of preprocessing
+2025-11-30T19:57:44.307: Start parse_statements!
+2025-11-30T19:57:53.378: End parser

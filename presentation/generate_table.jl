@@ -1,87 +1,68 @@
+# Generates a summary table from simulation results.
 using CSV
 using DataFrames
 using PrettyTables
 using Printf
 
-# --- Parse Args ---
+# --- Configuration ---
 target_model = "1"
 idx = findfirst(x -> x == "--model" || x == "-m", ARGS)
 if idx !== nothing && idx < length(ARGS)
     target_model = ARGS[idx+1]
 end
 
-# --- Paths ---
 results_path = joinpath(@__DIR__, "..", "results", "p1", target_model)
 csv_file = joinpath(results_path, "moments_summary.csv")
+tex_path = joinpath(results_path, "table_model_$(target_model).tex")
 
+# --- Load Data ---
 if !isfile(csv_file)
     error("CSV not found for Model $target_model. Run simulation first.")
 end
-
 df = CSV.read(csv_file, DataFrame)
 
-# --- Helpers ---
+# --- Helper Function ---
 function get_val(stat, var)
     row = filter(r -> r.Statistic == stat, df)
-    if isempty(row) return NaN end
-    # Check symbol existence
-    if string(var) in names(df) return row[1, Symbol(var)] end
-    return NaN
+    return isempty(row) || !(string(var) in names(df)) ? NaN : row[1, Symbol(var)]
 end
 
-# --- Variable Mapping ---
-var_map = Dict(
-    "y" => "y", 
-    "c" => "c", 
-    "i" => "i", 
-    "h" => "h", 
-    "productivity" => "productivity",
-    "yM" => "yM", 
-    "hM" => "hM"
-)
+# --- Table Generation ---
+vars_preference = ["y", "yM", "c", "i", "invest", "h", "hM", "productivity"]
+vars_to_show = filter(v -> v in names(df), vars_preference)
 
-if "invest" in names(df) 
-    var_map["i"] = "invest" 
-end
-
-# --- Build Table ---
-vars_preference = ["y", "yM", "c", "i", "h", "hM", "productivity"]
-
-# Filtramos: Que esté en el mapa Y que exista en el CSV generado
-vars_to_show = filter(v -> haskey(var_map, v) && (var_map[v] in names(df)), vars_preference)
-
-data = Matrix{Any}(undef, length(vars_to_show), 4)
+data_matrix = Matrix{Any}(undef, length(vars_to_show), 4)
 
 for (i, v) in enumerate(vars_to_show)
-    m_var = var_map[v]
-    
+    # Use a more descriptive label for productivity
     label = (v == "productivity") ? "p (y/h)" : v
-    data[i, 1] = label
+    label = (v == "invest") ? "i" : label # Standardize investment label
+    data_matrix[i, 1] = label
     
-    # 1. Std Dev (Percent)
-    val = get_val("StdDev", m_var) * 100
-    data[i, 2] = @sprintf("%.2f", val)
+    # Column 1: Std Dev (%)
+    std_dev = get_val("StdDev", v) * 100
+    data_matrix[i, 2] = @sprintf("%.2f", std_dev)
     
-    # 2. Rel Std Dev
+    # Column 2: Relative Std Dev
     if v == "y" || v == "yM"
-        data[i, 3] = "1.00"
+        data_matrix[i, 3] = "1.00"
     else
-        val = get_val("RelStdDev", m_var)
-        data[i, 3] = @sprintf("%.2f", val)
+        rel_std_dev = get_val("RelStdDev", v)
+        data_matrix[i, 3] = @sprintf("%.2f", rel_std_dev)
     end
     
-    # 3. Correlation
-    val = get_val("CorrWithY", m_var)
-    data[i, 4] = @sprintf("%.2f", val)
+    # Column 3: Correlation with Y
+    corr_with_y = get_val("CorrWithY", v)
+    data_matrix[i, 4] = @sprintf("%.2f", corr_with_y)
 end
 
 # --- Output ---
 header = ["Variable", "Std Dev (%)", "Rel Std Dev", "Corr with Y"]
-println("\nTable 3 Statistics - Model $target_model")
-pretty_table(data; header=header, crop=:none, alignment=:c)
 
-tex_path = joinpath(results_path, "table_model_$(target_model).tex")
+# Print to console
+pretty_table(data_matrix; header=header, crop=:none, alignment=:c)
+
+# Save to LaTeX file
 open(tex_path, "w") do f
-    pretty_table(f, data; header=header, backend=Val(:latex))
+    pretty_table(f, data_matrix; header=header, backend=Val(:latex))
 end
-println("\nLaTeX saved to: $tex_path")

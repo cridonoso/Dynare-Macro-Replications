@@ -38,61 +38,60 @@ end
 
 # --- Process Data Function ---
 function process_usa_data(fred_codes::Dict, start_date::Date, end_date::Date)
-    println(">>> Downloading FRED data...")
-    df_merged = DataFrame(date = Date[])
-    first_iter = true
-
-    for (code, name) in fred_codes
-        println("   - Fetching: $code ($name)")
-        df_temp = download_fred_series(code)
-        
-        if isempty(df_temp)
-            error("Failed to download essential series: $code")
-        end
-        
-        if code == "CNP16OV" # Monthly to Quarterly filter
-            filter!(row -> month(row.date) in [1, 4, 7, 10], df_temp)
-        end
-
-        # Renombrar 'value' al nombre interno deseado (ej: Y_raw)
-        rename!(df_temp, "value" => name)
-
-        if first_iter
-            df_merged = df_temp
-            first_iter = false
-        else
-            # Join on date
-            df_merged = innerjoin(df_merged, df_temp, on = :date)
-        end
+    # 1. Aseguramos que Gasto de Gobierno esté en el diccionario
+    if !haskey(fred_codes, "GCEC1")
+        fred_codes["GCEC1"] = "G_raw" # Real Govt Consumption & Investment
     end
 
+    println(">>> Downloading FRED data...")
+    
+    # Inicializamos un DataFrame para unir todas las series
+    df_merged = DataFrame()
+    is_first = true
+
+    for (code, name) in fred_codes
+        println("    Downloading $code as $name...")
+        df_series = download_fred_series(code)
+        
+        if isempty(df_series)
+            println("    Warning: Failed to download or process $code. Skipping.")
+            continue
+        end
+        
+        # Renombramos la columna 'value' al nombre deseado (ej: 'Y_raw')
+        rename!(df_series, "value" => name)
+        
+        if is_first
+            df_merged = df_series
+            is_first = false
+        else
+            df_merged = outerjoin(df_merged, df_series, on = :date)
+        end
+    end
     # Filter dates
     filter!(row -> row.date >= start_date && row.date <= end_date, df_merged)
+    dropmissing!(df_merged)
+    disallowmissing!(df_merged)
     sort!(df_merged, :date)
 
-    println(">>> Base data fetched. Size: ", size(df_merged))
-    println(">>> Processing variables (Log + HP Filter)...")
-    
-    # Calculations (Per Capita + Log)
-    # 1. Real GDP Per Capita
-    df_merged.y_log = log.(df_merged.Y_raw ./ df_merged.N_raw)
-    
-    # 2. Real Consumption Per Capita
-    df_merged.c_log = log.(df_merged.C_raw ./ df_merged.N_raw)
-    
-    # 3. Real Investment Per Capita
-    df_merged.i_log = log.(df_merged.I_raw ./ df_merged.N_raw)
-    
-    # 4. Hours Per Capita
-    df_merged.h_log = log.(df_merged.H_raw ./ df_merged.N_raw)
+    println(">>> Processing variables...")
 
-    # HP Filter (Using function from utils.jl - ensure it's loaded!)
-    # Note: Since this file is included by get_data.jl which includes utils.jl, hp_filter is available.
-    df_merged.y = hp_filter(df_merged.y_log)
-    df_merged.c = hp_filter(df_merged.c_log)
-    df_merged.i = hp_filter(df_merged.i_log)
-    df_merged.h = hp_filter(df_merged.h_log)
+    # A. Transformaciones Per Cápita (Logaritmos)
+    # Nota: Es crucial guardar esto para la Tabla 1 (Calibración)
+    df_merged.y_lvl = log.(df_merged.Y_raw ./ df_merged.N_raw)
+    df_merged.c_lvl = log.(df_merged.C_raw ./ df_merged.N_raw)
+    df_merged.i_lvl = log.(df_merged.I_raw ./ df_merged.N_raw)
+    df_merged.g_lvl = log.(df_merged.G_raw ./ df_merged.N_raw)
+    df_merged.h_lvl = log.(df_merged.H_raw ./ df_merged.N_raw)
 
-    # Select final variables for Dynare
-    return select(df_merged, :date, :y, :c, :i, :h)
+    # B. Filtro HP (Ciclos) para Tablas 2 y 3
+    # Usamos lambda=1600 para datos trimestrales
+    df_merged.y_cycle = hp_filter(df_merged.y_lvl)
+    df_merged.c_cycle = hp_filter(df_merged.c_lvl)
+    df_merged.i_cycle = hp_filter(df_merged.i_lvl)
+    df_merged.g_cycle = hp_filter(df_merged.g_lvl)
+    df_merged.h_cycle = hp_filter(df_merged.h_lvl)
+
+    # Retornamos todo: Niveles para calibrar, Ciclos para comparar momentos
+    return df_merged
 end

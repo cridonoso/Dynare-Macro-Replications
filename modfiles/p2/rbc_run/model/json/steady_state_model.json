@@ -1,0 +1,15 @@
+{"steady_state_model": [{"lhs": "A", "rhs":"0"}
+,{"lhs": "g", "rhs":"g_bar"}
+,{"lhs": "R_eff", "rhs":"1/(beta*exp((-lambda)))"}
+,{"lhs": "yk_ratio", "rhs":"theta/(R_eff-(1-delta))"}
+,{"lhs": "ik_ratio", "rhs":"exp(lambda)-(1-delta)"}
+,{"lhs": "iy_ratio", "rhs":"yk_ratio*ik_ratio"}
+,{"lhs": "y_per_n", "rhs":"yk_ratio^(theta/(1-theta))"}
+,{"lhs": "gy_ratio", "rhs":"g_bar/(y_per_n*n)"}
+,{"lhs": "cy_ratio", "rhs":"1-iy_ratio-gy_ratio"}
+,{"lhs": "n", "rhs":"(1-theta)*N_bar/(1-theta+cy_ratio*gamma)"}
+,{"lhs": "y", "rhs":"y_per_n*n"}
+,{"lhs": "k", "rhs":"yk_ratio*y"}
+,{"lhs": "i", "rhs":"iy_ratio*y"}
+,{"lhs": "c", "rhs":"y-i-g"}
+, {"lhs": "AUX_EXO_LEAD_50", "rhs": "1/c*beta*exp((-(lambda+e_a)))*(1+y*theta/k-delta)"}]}

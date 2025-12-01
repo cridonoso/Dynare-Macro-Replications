@@ -1,0 +1,31 @@
+{"static_model": {"model_local_variables": [], "external_functions_temporary_terms_": [], "temporary_terms_": [], 
+"residuals":[
+{"residual": {"lhs": "y", "rhs": "exp(z)*k^theta*h^(1-theta)"}}
+, {"residual": {"lhs": "c+invest+g", "rhs": "y"}}
+, {"residual": {"lhs": "k", "rhs": "invest+k*(1-delta)"}}
+, {"residual": {"lhs": "z", "rhs": "z*rho+e_z"}}
+, {"residual": {"lhs": "log(g)", "rhs": "(1-lamg)*log(ghat)+log(g)*lamg+e_g"}}
+, {"residual": {"lhs": "1/c", "rhs": "1/c*beta*(1+h^(1-theta)*exp(z)*theta*k^(theta-1)-delta)"}}
+, {"residual": {"lhs": "A/(1-h)", "rhs": "y*(1-theta)*1/c/h"}}
+
+]
+, "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 7, "ncols": 7, "entries": [{"eq": 1, "col": 3, "var": "y", "val": "1"}
+, {"eq": 1, "col": 4, "var": "k", "val": "(-(h^(1-theta)*exp(z)*get_power_deriv(k,theta,1)))"}
+, {"eq": 1, "col": 5, "var": "h", "val": "(-(exp(z)*k^theta*get_power_deriv(h,1-theta,1)))"}
+, {"eq": 1, "col": 6, "var": "z", "val": "(-(exp(z)*k^theta*h^(1-theta)))"}
+, {"eq": 2, "col": 1, "var": "c", "val": "1"}
+, {"eq": 2, "col": 2, "var": "invest", "val": "1"}
+, {"eq": 2, "col": 3, "var": "y", "val": "(-1)"}
+, {"eq": 2, "col": 7, "var": "g", "val": "1"}
+, {"eq": 3, "col": 2, "var": "invest", "val": "(-1)"}
+, {"eq": 3, "col": 4, "var": "k", "val": "1-(1-delta)"}
+, {"eq": 4, "col": 6, "var": "z", "val": "1-rho"}
+, {"eq": 5, "col": 7, "var": "g", "val": "1/g-lamg*1/g"}
+, {"eq": 6, "col": 1, "var": "c", "val": "(-1)/(c*c)-(1+h^(1-theta)*exp(z)*theta*k^(theta-1)-delta)*beta*(-1)/(c*c)"}
+, {"eq": 6, "col": 4, "var": "k", "val": "(-(1/c*beta*h^(1-theta)*exp(z)*theta*get_power_deriv(k,theta-1,1)))"}
+, {"eq": 6, "col": 5, "var": "h", "val": "(-(1/c*beta*exp(z)*theta*k^(theta-1)*get_power_deriv(h,1-theta,1)))"}
+, {"eq": 6, "col": 6, "var": "z", "val": "(-(1/c*beta*h^(1-theta)*exp(z)*theta*k^(theta-1)))"}
+, {"eq": 7, "col": 1, "var": "c", "val": "(-(y*(1-theta)*(-1)/(c*c)/h))"}
+, {"eq": 7, "col": 3, "var": "y", "val": "(-((1-theta)*1/c/h))"}
+, {"eq": 7, "col": 5, "var": "h", "val": "A/((1-h)*(1-h))-(-(y*(1-theta)*1/c))/(h*h)"}
+]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 7, "ncols": 49, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 7, "ncols": 343, "entries": []}}}

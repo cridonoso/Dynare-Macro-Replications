@@ -1,9 +1,9 @@
 Dynare version: 0.10.4
-2025-11-23T20:29:44.958: Starting @dynare 3.mod
+2025-11-30T18:49:10.325: Starting @dynare 3.mod
 ["3.mod", "language=julia", "json=compute", "notmpterms"]
 Dynare preprocessor version: 7.0.0+0
-2025-11-23T20:29:44.968: End of preprocessing
-2025-11-23T20:29:44.974: Start parse_statements!
+2025-11-30T18:49:10.335: End of preprocessing
+2025-11-30T18:49:10.342: Start parse_statements!
   Steady state
 
 ───────────────┬──────────
@@ -96,5 +96,5 @@ Dynare preprocessor version: 7.0.0+0
   Productivity │ 0.9941   0.986  0.9758  0.9639  0.9504
 ───────────────┴────────────────────────────────────────
 
-2025-11-23T20:29:45.412: End parse_statements!
-2025-11-23T20:29:45.412: End parser
+2025-11-30T18:49:14.914: End parse_statements!
+2025-11-30T18:49:14.914: End parser
