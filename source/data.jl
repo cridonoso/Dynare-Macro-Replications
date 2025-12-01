@@ -1,117 +1,141 @@
-using CSV
+# Nombre archivo: source/data.jl
+# CORREGIDO: Frecuencia Trimestral forzada para alineación perfecta
 using DataFrames
+using CSV
 using Dates
 using Statistics
-using LinearAlgebra
 using Downloads
 
-# --- Download Function ---
 function download_fred_series(series_id)
-    url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=$series_id"
+    # TRUCO CLAVE: Agregamos '&frequency=q&aggregation_method=avg'
+    # Esto fuerza a FRED a convertir series mensuales (Consumo, Pob) a Trimestrales
+    # promediando los meses. Así todas las fechas serán 01-01, 04-01, 07-01, 10-01.
+    url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=$series_id&frequency=q&aggregation_method=avg"
+    
     try
         io = IOBuffer()
         Downloads.download(url, io)
         seekstart(io)
         df = CSV.read(io, DataFrame)
-
-        date_col_idx = findfirst(x -> lowercase(string(x)) == "observation_date", names(df))
         
+        # Normalizar nombre de fecha
+        date_col_idx = findfirst(x -> lowercase(string(x)) == "observation_date", names(df))
         if date_col_idx !== nothing
             rename!(df, names(df)[date_col_idx] => "date")
-        else
-            println("Warning: No 'date' column found for $series_id")
         end
-
-        if ncol(df) == 2
-            val_col = names(df)[findfirst(n -> n != "date", names(df))]
-            rename!(df, val_col => "value")
-        elseif series_id in names(df)
-            rename!(df, series_id => "value")
+        
+        # Normalizar columna de valor
+        # A veces FRED devuelve el ID como nombre, a veces "value".
+        col_names = names(df)
+        val_col_idx = findfirst(n -> n != "date", col_names)
+        
+        if val_col_idx !== nothing
+            rename!(df, col_names[val_col_idx] => "value")
         end
         
         return df
     catch e
-        println("Error downloading $series_id: $e")
+        println("    Error downloading $series_id: $e")
         return DataFrame()
     end
 end
 
-# --- Process Data Function ---
 function process_usa_data(fred_codes::Dict, start_date::Date, end_date::Date)
-    # 1. Aseguramos que Gasto de Gobierno esté en el diccionario
-    if !haskey(fred_codes, "GCEC1")
-        fred_codes["GCEC1"] = "G_raw" # Real Govt Consumption & Investment
-    end
-
-    println(">>> Downloading FRED data...")
+    println(">>> Downloading and merging FRED data (Quarterly Aggregation)...")
     
-    # Inicializamos un DataFrame para unir todas las series
     df_merged = DataFrame()
     is_first = true
 
+    # Ordenamos el diccionario para que el merge sea determinístico (opcional pero útil)
     for (code, name) in fred_codes
-        println("    Downloading $code as $name...")
+        print("    Fetching $code -> $name... ")
         df_series = download_fred_series(code)
         
         if isempty(df_series)
-            println("    Warning: Failed to download or process $code. Skipping.")
+            println("[FAILED]")
             continue
         end
+        println("[OK] ($(nrow(df_series)) obs)")
         
-        # Renombramos la columna 'value' al nombre deseado (ej: 'Y_raw')
-        rename!(df_series, "value" => name)
+        # Renombrar columna de valor al nombre económico deseado
+        if "value" in names(df_series)
+            rename!(df_series, "value" => name)
+        else
+            println("    Warning: 'value' column not found in $code")
+            continue
+        end
         
         if is_first
             df_merged = df_series
             is_first = false
         else
-            df_merged = outerjoin(df_merged, df_series, on = :date)
+            # Ahora el innerjoin es seguro porque TODAS son trimestrales
+            df_merged = innerjoin(df_merged, df_series, on = :date, makeunique=true)
         end
     end
-    # Filter dates
+
+    println(">>> Merged rows before filtering: $(nrow(df_merged))")
+
+    # Filtrar fechas
     filter!(row -> row.date >= start_date && row.date <= end_date, df_merged)
-    dropmissing!(df_merged)
-    disallowmissing!(df_merged)
     sort!(df_merged, :date)
 
-    println(">>> Processing variables...")
-
-    # A. Transformaciones Per Cápita (Logaritmos)
-    # Nota: Es crucial guardar esto para la Tabla 1 (Calibración)
-    df_merged.y_lvl = log.(df_merged.Y_raw ./ df_merged.N_raw)
-    df_merged.c_lvl = log.(df_merged.C_raw ./ df_merged.N_raw)
-    df_merged.i_lvl = log.(df_merged.I_raw ./ df_merged.N_raw)
-    df_merged.g_lvl = log.(df_merged.G_raw ./ df_merged.N_raw)
-    df_merged.h_lvl = log.(df_merged.H_raw ./ df_merged.N_raw)
-
-    # B. Filtro HP (Ciclos) para Tablas 2 y 3 (Estadísticas de Negocios)
-    try
-        df_merged.y_cycle = hp_filter(df_merged.y_lvl)
-        df_merged.c_cycle = hp_filter(df_merged.c_lvl)
-        df_merged.i_cycle = hp_filter(df_merged.i_lvl)
-        df_merged.g_cycle = hp_filter(df_merged.g_lvl)
-        df_merged.h_cycle = hp_filter(df_merged.h_lvl)
-    catch e
-        println("Warning: hp_filter function not found or failed. Skipping HP columns.")
+    rows = nrow(df_merged)
+    println(">>> Rows after filtering ($start_date to $end_date): $rows")
+    
+    if rows == 0
+        error("El DataFrame está vacío. Revisa que las fechas solicitadas (1955-1984) coincidan con la data descargada.")
     end
 
-    # C. Variables para Estimación (Observables Estacionarios para Dynare)
-    println(">>> Generating Estimation Observables (Growth Rates & Demeaned)...")
+    println(">>> Calculating Economic Variables (C&E 1992 definitions)...")
+    
+    # 1. Construcción de Consumo Real
+    # Verificamos existencia de columnas antes de operar
+    cols_needed = ["C_Nom_ND", "C_Nom_SV", "P_Deflator"]
+    if all(c -> c in names(df_merged), cols_needed)
+        # Convertir a Float64 por seguridad (a veces CSV.read detecta strings si hay puntos)
+        c_nd = Float64.(df_merged.C_Nom_ND)
+        c_sv = Float64.(df_merged.C_Nom_SV)
+        defl = Float64.(df_merged.P_Deflator)
+        
+        df_merged.C_raw = (c_nd .+ c_sv) ./ (defl ./ 100)
+    else
+        missing_cols = filter(c -> !(c in names(df_merged)), cols_needed)
+        error("Faltan columnas para Consumo Real: $missing_cols. Revisa la descarga.")
+    end
 
-    # 1. Crecimiento del PIB (dy_obs)
-    # Calculamos la primera diferencia logarítmica multiplicada por 100.
-    # [missing; ...] se usa para mantener la longitud del vector alineada con el DataFrame.
-    dy_val = diff(df_merged.y_lvl) .* 100
-    df_merged.dy_obs = [missing; dy_val]
+    # 2. Transformaciones Per Cápita
+    # Convertimos todo a Float64 para evitar errores de tipo
+    Y = Float64.(df_merged.Y_raw)
+    G = Float64.(df_merged.G_raw)
+    H = Float64.(df_merged.H_raw)
+    N = Float64.(df_merged.N_raw) # Población
+    C = df_merged.C_raw
 
-    # 2. Horas Desviadas (h_obs)
-    # Logaritmo de horas menos su media muestral.
-    df_merged.h_obs = df_merged.h_lvl .- mean(df_merged.h_lvl)
+    df_merged.y_pc = Y ./ N
+    df_merged.c_pc = C ./ N
+    df_merged.g_pc = G ./ N
+    df_merged.n_pc = H ./ N 
 
-    # Limpieza final:
-    # Eliminamos la primera fila porque 'dy_obs' será 'missing' (resultado de diff)
+    # 3. Observables para Estimación
+    # Inicializar con missings
+    df_merged.dy_obs = Vector{Union{Float64, Missing}}(missing, rows)
+    df_merged.h_obs  = Vector{Union{Float64, Missing}}(missing, rows)
+
+    if rows > 1
+        # Crecimiento Output (diff log * 100)
+        # diff reduce el vector en 1, asignamos desde el índice 2
+        dy = diff(log.(df_merged.y_pc)) .* 100
+        df_merged.dy_obs[2:end] = dy
+    end
+
+    # Horas logarítmicas (desviadas de la media)
+    h_log = log.(df_merged.n_pc)
+    df_merged.h_obs = h_log .- mean(h_log)
+
+    # Eliminar la primera fila que tiene missing por el diff
     dropmissing!(df_merged)
-
-    # Retornamos todo: Niveles, Ciclos HP y Observables para estimación
+    
+    println(">>> Final rows for estimation: $(nrow(df_merged))")
     return df_merged
 end

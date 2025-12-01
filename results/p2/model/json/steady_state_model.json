@@ -1,9 +1,0 @@
-{"steady_state_model": [{"lhs": "a", "rhs":"0"}
-,{"lhs": "h", "rhs":"0.3333333333333333"}
-,{"lhs": "k_y_ratio", "rhs":"alpha/(1/beta-(1-delta))"}
-,{"lhs": "y", "rhs":"h*k_y_ratio^(alpha/(1-alpha))"}
-,{"lhs": "k", "rhs":"k_y_ratio*y"}
-,{"lhs": "i", "rhs":"delta*k"}
-,{"lhs": "c", "rhs":"y-i"}
-,{"lhs": "productivity", "rhs":"y/h"}
-]}

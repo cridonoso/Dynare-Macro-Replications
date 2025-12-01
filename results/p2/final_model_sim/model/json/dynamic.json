@@ -1,0 +1,46 @@
+{"dynamic_model": {"model_local_variables": [], "external_functions_temporary_terms_": [], "temporary_terms_": [], 
+"residuals":[
+{"residual": {"lhs": "1/c", "rhs": "beta*1/(c(1)*exp(lambda(1)))*(theta*y(1)/k(-1)+1-delta)"}}
+, {"residual": {"lhs": "y", "rhs": "c+k-k(-1)*(1-delta)*exp((-lambda))+g"}}
+, {"residual": {"lhs": "y", "rhs": "(k(-1)*exp((-lambda)))^theta*n^(1-theta)"}}
+, {"residual": {"lhs": "w", "rhs": "y*(1-theta)/n"}}
+, {"residual": {"lhs": "c*gamma/(N-n)", "rhs": "w"}}
+, {"residual": {"lhs": "log(g)", "rhs": "(1-rho_g)*log(g_ss)+rho_g*log(g(-1))+e_mu"}}
+, {"residual": {"lhs": "lambda", "rhs": "lambda_ss+e_lambda"}}
+, {"residual": {"lhs": "dy_obs", "rhs": "(lambda+log(y)-log(y(-1)))*100"}}
+, {"residual": {"lhs": "h_obs", "rhs": "log(n)"}}
+
+]
+, "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 9, "ncols": 17, "entries": [{"eq": 1, "col": 13, "var": "y", "shift": 1, "val": "(-(beta*1/(c(1)*exp(lambda(1)))*theta/k(-1)))"}
+, {"eq": 1, "col": 5, "var": "c", "shift": 0, "val": "(-1)/(c*c)"}
+, {"eq": 1, "col": 14, "var": "c", "shift": 1, "val": "(-((theta*y(1)/k(-1)+1-delta)*beta*(-exp(lambda(1)))/(c(1)*exp(lambda(1))*c(1)*exp(lambda(1)))))"}
+, {"eq": 1, "col": 2, "var": "k", "shift": -1, "val": "(-(beta*1/(c(1)*exp(lambda(1)))*(-(theta*y(1)))/(k(-1)*k(-1))))"}
+, {"eq": 1, "col": 15, "var": "lambda", "shift": 1, "val": "(-((theta*y(1)/k(-1)+1-delta)*beta*(-(c(1)*exp(lambda(1))))/(c(1)*exp(lambda(1))*c(1)*exp(lambda(1)))))"}
+, {"eq": 2, "col": 4, "var": "y", "shift": 0, "val": "1"}
+, {"eq": 2, "col": 5, "var": "c", "shift": 0, "val": "(-1)"}
+, {"eq": 2, "col": 2, "var": "k", "shift": -1, "val": "(1-delta)*exp((-lambda))"}
+, {"eq": 2, "col": 6, "var": "k", "shift": 0, "val": "(-1)"}
+, {"eq": 2, "col": 8, "var": "g", "shift": 0, "val": "(-1)"}
+, {"eq": 2, "col": 9, "var": "lambda", "shift": 0, "val": "k(-1)*(1-delta)*(-exp((-lambda)))"}
+, {"eq": 3, "col": 4, "var": "y", "shift": 0, "val": "1"}
+, {"eq": 3, "col": 2, "var": "k", "shift": -1, "val": "(-(n^(1-theta)*exp((-lambda))*get_power_deriv(k(-1)*exp((-lambda)),theta,1)))"}
+, {"eq": 3, "col": 7, "var": "n", "shift": 0, "val": "(-((k(-1)*exp((-lambda)))^theta*get_power_deriv(n,1-theta,1)))"}
+, {"eq": 3, "col": 9, "var": "lambda", "shift": 0, "val": "(-(n^(1-theta)*get_power_deriv(k(-1)*exp((-lambda)),theta,1)*k(-1)*(-exp((-lambda)))))"}
+, {"eq": 4, "col": 4, "var": "y", "shift": 0, "val": "(-((1-theta)/n))"}
+, {"eq": 4, "col": 7, "var": "n", "shift": 0, "val": "(-((-(y*(1-theta)))/(n*n)))"}
+, {"eq": 4, "col": 12, "var": "w", "shift": 0, "val": "1"}
+, {"eq": 5, "col": 5, "var": "c", "shift": 0, "val": "gamma/(N-n)"}
+, {"eq": 5, "col": 7, "var": "n", "shift": 0, "val": "c*gamma/((N-n)*(N-n))"}
+, {"eq": 5, "col": 12, "var": "w", "shift": 0, "val": "(-1)"}
+, {"eq": 6, "col": 3, "var": "g", "shift": -1, "val": "(-(rho_g*1/g(-1)))"}
+, {"eq": 6, "col": 8, "var": "g", "shift": 0, "val": "1/g"}
+, {"eq": 6, "col": 17, "var": "e_mu", "shift": 0, "val": "(-1)"}
+, {"eq": 7, "col": 9, "var": "lambda", "shift": 0, "val": "1"}
+, {"eq": 7, "col": 16, "var": "e_lambda", "shift": 0, "val": "(-1)"}
+, {"eq": 8, "col": 1, "var": "y", "shift": -1, "val": "(-(100*(-(1/y(-1)))))"}
+, {"eq": 8, "col": 4, "var": "y", "shift": 0, "val": "(-(100*1/y))"}
+, {"eq": 8, "col": 9, "var": "lambda", "shift": 0, "val": "(-100)"}
+, {"eq": 8, "col": 10, "var": "dy_obs", "shift": 0, "val": "1"}
+, {"eq": 9, "col": 7, "var": "n", "shift": 0, "val": "(-(1/n))"}
+, {"eq": 9, "col": 11, "var": "h_obs", "shift": 0, "val": "1"}
+]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 9, "ncols": 289, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 9, "ncols": 4913, "entries": []}}}

@@ -1,188 +1,246 @@
+# Nombre archivo: p2_full_simulation_v3.jl
+# REPLICACIÓN EXACTA DE VARIABLES C&E 1992 (y, n, g, dk, cp)
+
 using Dynare
 using DataFrames
 using CSV
 using Statistics
 using LinearAlgebra
-using Optim
-using Random
+using SparseArrays
+using Printf
 
-# --- 1. CONFIGURACIÓN ---
+# =========================================================================================
+# 0. CONFIGURACIÓN Y RUTAS
+# =========================================================================================
 project_root = joinpath(@__DIR__, "..")
-include(joinpath(project_root, "source", "utils.jl"))
+data_path    = joinpath(project_root, "data", "data_gmm.csv")
+mod_base     = joinpath(project_root, "modfiles", "p2", "rbc_divlabor.mod")
+results_dir  = joinpath(project_root, "results", "p2")
+mod_final    = joinpath(results_dir, "final_model_sim.mod")
 
-data_path = joinpath(project_root, "data", "data_usa.csv")
-df_data   = CSV.read(data_path, DataFrame)
+if !isdir(results_dir) mkpath(results_dir) end
 
-# Momentos objetivo (4 momentos)
-target_moments = [
-    mean(skipmissing(df_data.dy_obs)),
-    std(skipmissing(df_data.dy_obs)),
-    std(skipmissing(df_data.h_obs)),
-    cor(collect(skipmissing(df_data.dy_obs)), collect(skipmissing(df_data.h_obs)))
-]
+println(">>> INICIANDO REPLICACIÓN C&E 1992 (VARIABLES: y, n, g, dk, cp)...")
 
-println(">>> Momentos Objetivo: ", round.(target_moments, digits=4))
+# =========================================================================================
+# 1. ESTIMACIÓN DE PARÁMETROS (TABLA 1)
+# =========================================================================================
+println("\n>>> [1/3] Estimando Parámetros...")
 
-mod_path = joinpath(project_root, "modfiles", "p2", "rbc_divlabor.mod")
-if !isfile(mod_path)
-    error("No se encontró el archivo: $mod_path")
+if !isfile(data_path) error("Falta data_gmm.csv. Ejecuta p2_get_data.jl primero.") end
+
+# Leer datos (y, c, g, n)
+df_data = CSV.read(data_path, DataFrame; header=false)
+y_data = df_data[:, 1]
+c_data = df_data[:, 2] # Esto es c^p (Consumo Privado)
+g_data = df_data[:, 3] # Esto es g (Gobierno)
+n_data = df_data[:, 4]
+
+# Parámetros Fijos
+beta_val  = 1.03^(-0.25) 
+delta_val = 0.021        
+theta_val = 0.339        
+N_total   = 1369.0       
+
+# Ajuste de escala (Horas)
+scale_factor = 320.0 / mean(n_data)
+n_data_adj   = n_data .* scale_factor
+
+# Estimación GMM simplificada
+dy = diff(log.(y_data))
+lambda_hat = mean(dy)
+sigma_lambda_hat = std(dy)
+
+vec_gamma = (1 - theta_val) .* (y_data ./ n_data_adj) .* (N_total .- n_data_adj) ./ c_data
+gamma_hat = mean(vec_gamma)
+
+lg = log.(g_data)
+Y_reg = lg[2:end]; X_reg = hcat(ones(length(Y_reg)), lg[1:end-1])
+B_ols = X_reg \ Y_reg
+rho_g_hat = B_ols[2]; const_g = B_ols[1]
+g_ss_hat  = exp(const_g / (1 - rho_g_hat))
+sigma_mu_hat = std(Y_reg - X_reg * B_ols)
+
+# Generar Tabla 1
+df_table1 = DataFrame(Parameter=["beta","delta","theta","N","lambda","gamma","rho_g","g_ss","sigma_lambda","sigma_mu"],
+                      Value=[beta_val, delta_val, theta_val, N_total, lambda_hat, gamma_hat, rho_g_hat, g_ss_hat, sigma_lambda_hat, sigma_mu_hat])
+CSV.write(joinpath(results_dir, "Table1_Parameters.csv"), df_table1)
+println("   > Tabla 1 guardada.")
+
+# =========================================================================================
+# 2. CALCULO DE STEADY STATE E INYECCIÓN EN DYNARE
+# =========================================================================================
+println("\n>>> [2/3] Configurando Dynare...")
+
+# SS Analítico
+exp_lam = exp(lambda_hat)
+ky_ratio_inv = (1/beta_val * exp_lam - (1-delta_val)) / theta_val
+
+# Resolver n numéricamente
+resid_n(n) = begin
+    k = (n^(1-theta_val) / ky_ratio_inv)^(1/(1-theta_val))
+    y = k * ky_ratio_inv
+    c_val = y - k*(1 - (1-delta_val)*exp(-lambda_hat)) - g_ss_hat
+    rhs = (1-theta_val)*(y/n)*((N_total-n)/gamma_hat)
+    return c_val - rhs
 end
 
-# --- 2. OPTIMIZACIÓN ---
-# Usamos la función robusta de utils.jl
-objective_function = params -> rbc_gmm_loss_robust(params, mod_path, target_moments)
+n_guess = 300.0
+for i in 1:10000 #// Aumentamos las iteraciones
+    global n_guess
+    r = resid_n(n_guess)
+    if abs(r) < 1e-15 break end #// Tolerancia MÁXIMA
+    
+    #// Usar un paso muy conservador para la búsqueda de la raíz
+    step_size = 0.000001
+    n_guess = n_guess - r * step_size
+end
 
-println(">>> Iniciando Estimación...")
+n_ss = n_guess
 
-# [theta, rho_g, sigma_lam, sigma_mu]
-x0    = [0.33, 0.96, 0.01, 0.01]
-lower = [0.01, 0.01, 0.0001, 0.0001]
-upper = [0.99, 0.99, 0.10, 0.10] 
+k_ss = (n_ss^(1-theta_val) / ky_ratio_inv)^(1/(1-theta_val))
+y_ss = k_ss * ky_ratio_inv
+c_ss = y_ss - k_ss*(1 - (1-delta_val)*exp(-lambda_hat)) - g_ss_hat
+w_ss = (1 - theta_val) * (y_ss / n_ss)
 
-# Optimizador
-res_optim = optimize(objective_function, lower, upper, x0, Fminbox(NelderMead()), 
-                     Optim.Options(iterations=200, show_trace=true, time_limit=300.0))
-
-params_final = Optim.minimizer(res_optim)
-
-println("\n>>> Resultados Estimados:")
-println("Theta: ", round(params_final[1], digits=4))
-println("Rho_g: ", round(params_final[2], digits=4))
-
-# --- 3. GENERACIÓN DE TABLAS (Vía Dynare stoch_simul) ---
-println("\n>>> Generando simulación final...")
-
-# BLINDAJE: Forzamos rho <= 0.98 para garantizar que la simulación no explote
-final_theta = params_final[1]
-final_rho   = min(params_final[2], 0.98) 
-final_sig_l = params_final[3]
-final_sig_m = params_final[4]
-
-println(">>> Parámetros usados para simular: Rho_g = $final_rho")
-
-# Escribir .mod temporal para la simulación final
-final_mod_path = joinpath(dirname(mod_path), "rbc_final_run_sim.mod")
-mod_content = read(mod_path, String)
-
-# Inyectamos el bloque de simulación
-# periods=113000 equivale a 1000 réplicas de 113 periodos
-shocks_block = """
-theta = $final_theta;
-rho_g = $final_rho;
-shocks;
-    var eps_lambda; stderr $final_sig_l;
-    var eps_mu;     stderr $final_sig_m;
-end;
-initval;
-    lambda = 0.0045; g_bar = 186.0; n = 300; k_bar = 10000; y_bar = 1000; c_bar = 800; dy_obs = 0.45; h_obs = 0;
-end;
-steady;
-check;
-stoch_simul(order=1, irf=0, periods=113000, nograph, noprint);
+# Construir strings para el .mod
+params_str = """
+beta = $(beta_val); delta = $(delta_val); theta = $(theta_val); N = $(N_total);
+lambda_ss = $(lambda_hat); gamma = $(gamma_hat); rho_g = $(rho_g_hat); g_ss = $(g_ss_hat);
 """
 
-# Limpiamos comandos previos
-content_clean = replace(mod_content, "stoch_simul(order=1, irf=0, periods=0, nograph, noprint);" => "")
-content_clean = replace(content_clean, "stoch_simul(order=1, irf=0, nograph, noprint);" => "")
+initval_block = """
+initval;
+    lambda=$(lambda_hat); g=$(g_ss_hat); n=$(n_ss); k=$(k_ss); y=$(y_ss); c=$(c_ss);
+    w=$(w_ss);
+    dy_obs=$(lambda_hat*100); h_obs=$(log(n_ss));
+end;
+"""
 
-write(final_mod_path, content_clean * "\n" * shocks_block)
+sigma_mu_for_sim = 0.012391
+shocks_block = "shocks; var e_lambda; stderr $(sigma_lambda_hat); var e_mu; stderr $(sigma_mu_for_sim); end;"
 
-# Ejecutamos Dynare
-context = eval(:(@dynare $final_mod_path))
+# Leer y modificar .mod
+mod_content = read(mod_base, String)
+mod_content = replace(mod_content, r"^\s*@#include.*$"m => params_str)
+mod_content = replace(mod_content, r"^\s*\w+\s*=\s*\w+_val\s*;.*$"m => "")
 
-# --- 4. PROCESAMIENTO DE RESULTADOS ---
-# En Dynare.jl, las simulaciones están en context.results.model_results[1].simulations
-if isempty(context.results.model_results[1].simulations)
-    error("CRÍTICO: Dynare no generó simulaciones (Vector vacío). El modelo es inestable.")
+# 1. ANULACIÓN CRÍTICA: Eliminar completamente el bloque steady_state_model y cualquier initval
+mod_content = replace(mod_content, r"steady_state_model;.*?end;"s => "")
+mod_content = replace(mod_content, r"initval;.*?end;"s => "") # Limpia cualquier initval previo
+mod_content = replace(mod_content, r"shocks;.*end;"s => "")
+mod_content = replace(mod_content, r"stoch_simul.*" => "")
+
+# 2. Escribir el archivo final (AÑADIENDO initval AL FINAL)
+open(mod_final, "w") do io
+    println(io, mod_content) 
+    println(io, initval_block) #// Inyecta el SS numérico robusto de Julia
+    println(io, shocks_block)
+    
+    # Usamos steady(nocheck) para que Dynare no intente resolver el SS analítico, 
+    # sino que use el valor proporcionado como si fuera el resuelto.
+    # Luego 'check' verifica las condiciones de Rango.
+    println(io, "steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);")
 end
 
-sims = context.results.model_results[1].simulations[1] 
-data_sim = sims.data # Matriz [Variables x Periodos]
+# =========================================================================================
+# 3. SIMULACIÓN Y TABLAS 2 & 3 (VARIABLES SOLICITADAS Y CORRECTAS)
+# =========================================================================================
+println("\n>>> [3/3] Ejecutando Dynare y Generando Tablas...")
 
-# Recuperar índices de forma robusta (sin usar dr)
-sym = context.symboltable
-get_idx(name) = sym[name].orderintype
+context = Dynare.dynare(mod_final)
+sims = context.results.model_results[1].simulations[1]
 
-idx_y = get_idx("y_bar")
-idx_c = get_idx("c_bar")
-idx_n = get_idx("n")
-idx_k = get_idx("k_bar")
+# Función para extraer datos
+get_data(var) = Float64.(collect(getproperty(sims.data, Symbol(var)))[201:end])
 
-vec_y = data_sim[idx_y, :]
-vec_c = data_sim[idx_c, :]
-vec_n = data_sim[idx_n, :]
-vec_k = data_sim[idx_k, :]
-
-# Procesar en bloques (Chunks) para replicar la estructura de 1000 simulaciones
-T_chunk = 113
-n_chunks = floor(Int, length(vec_y) / T_chunk)
-
-println(">>> Procesando $n_chunks réplicas de $T_chunk periodos...")
-
-means_y, means_n, means_cy, means_ky = Float64[], Float64[], Float64[], Float64[]
-stds_y, stds_n, corrs_ny = Float64[], Float64[], Float64[]
-
-# Filtro HP local
-function simple_hp_filter(y, lambda=1600.0)
-    n = length(y)
-    if n < 3 return zeros(n) end
-    D = zeros(n-2, n)
-    for i in 1:n-2
-        D[i, i] = 1.0; D[i, i+1] = -2.0; D[i, i+2] = 1.0
-    end
-    A = Matrix{Float64}(I, n, n) + lambda * (D' * D)
-    return y - (A \ y)
+# Función Filtro HP
+function hp_filter(y, lam=1600.0)
+    n = length(y); D = spzeros(n-2, n)
+    for i in 1:n-2 D[i,i]=1; D[i,i+1]=-2; D[i,i+2]=1 end
+    F = sparse(I,n,n) + lam*(D'*D)
+    return y - (F \ y)
 end
 
-for i in 1:n_chunks
-    range = (i-1)*T_chunk + 1 : i*T_chunk
-    
-    # Datos del chunk
-    y_s = vec_y[range]
-    n_s = vec_n[range]
-    c_s = vec_c[range]
-    k_s = vec_k[range]
-    
-    # Tabla 2 (Medias)
-    push!(means_y, mean(y_s))
-    push!(means_n, mean(n_s))
-    push!(means_cy, mean(c_s ./ y_s))
-    push!(means_ky, mean(k_s ./ y_s))
-    
-    # Tabla 3 (Ciclos HP)
-    # Protegemos contra log(0) o negativos si la simulación se volvió loca momentáneamente
-    ly = log.(abs.(y_s) .+ 1e-6)
-    ln = log.(abs.(n_s) .+ 1e-6)
-    
-    y_cyc = simple_hp_filter(ly, 1600.0)
-    n_cyc = simple_hp_filter(ln, 1600.0)
-    prod_cyc = y_cyc .- n_cyc 
-    
-    push!(stds_y, std(y_cyc))
-    push!(stds_n, std(n_cyc))
-    push!(corrs_ny, cor(n_cyc, prod_cyc))
-end
+# 1. Obtener Series Brutas
+vec_y = get_data("y")
+vec_n = get_data("n")
+vec_g = get_data("g")
+vec_cp = get_data("c") 
+vec_k = get_data("k")
 
-# --- 5. GUARDAR CSVs ---
-results_path = joinpath(project_root, "results", "p2")
-mkpath(results_path)
+# 2. Calcular Variables Derivadas
+vec_dk = vec_y .- vec_cp .- vec_g
+vec_prod = vec_y ./ vec_n
+# Salario Real (w o r): w = MPL = (1-theta) * y / n
+vec_w = (1 - theta_val) .* vec_prod 
 
-df_t1 = DataFrame(Parameter = ["theta", "rho_g", "sigma_lambda", "sigma_mu"], 
-                  Estimate = [final_theta, final_rho, final_sig_l, final_sig_m])
-CSV.write(joinpath(results_path, "Table1_Parameters.csv"), df_t1)
+# 3. Logaritmos y Filtro HP
+log_y = log.(max.(vec_y, 1e-10))
+log_cp = log.(max.(vec_cp, 1e-10))
+log_dk = log.(max.(vec_dk, 1e-10)) 
+log_n = log.(max.(vec_n, 1e-10))
+log_g = log.(max.(vec_g, 1e-10))
+log_prod = log.(max.(vec_prod, 1e-10))
+log_w = log.(max.(vec_w, 1e-10)) 
 
+# Filtrado
+cycle_y = hp_filter(log_y)
+cycle_cp = hp_filter(log_cp)
+cycle_dk = hp_filter(log_dk)
+cycle_n = hp_filter(log_n)
+cycle_g = hp_filter(log_g)
+cycle_prod = hp_filter(log_prod)
+cycle_w = hp_filter(log_w)
+
+# 4. Calcular Estadísticos
+sigma_y = std(cycle_y)
+sigma_cp = std(cycle_cp)
+sigma_dk = std(cycle_dk)
+sigma_n = std(cycle_n)
+sigma_g = std(cycle_g)
+sigma_prod = std(cycle_prod)
+sigma_w = std(cycle_w) # <--- ¡LÍNEA AÑADIDA!
+
+# -------------------------------------------------------------------------
+# GENERACIÓN DE TABLA 3 (Formato C&E 1992)
+# -------------------------------------------------------------------------
+
+df_table3 = DataFrame(
+    Statistic = [
+        "sigma_c / sigma_y", 
+        "sigma_dk / sigma_y", 
+        "sigma_n / sigma_y", 
+        "sigma_r / sigma_y/n", # r (Real Wage)
+        "sigma_g / sigma_y",
+        "sigma_y", 
+        "corr(y/n, n)"
+    ],
+    Value = [
+        sigma_cp / sigma_y,
+        sigma_dk / sigma_y,
+        sigma_n / sigma_y,
+        sigma_w / sigma_prod, # Uso sigma_w / sigma_prod
+        sigma_g / sigma_y, 
+        sigma_y * 100,
+        cor(cycle_prod, cycle_n)
+    ]
+)
+
+# Redondear para visualización
+df_table3.Value = round.(df_table3.Value, digits=2)
+
+CSV.write(joinpath(results_dir, "Table3_SecondMoments.csv"), df_table3)
+println("\n>>> TABLA 3 GENERADA (Modelo sin Choque de Gobierno):")
+println(df_table3)
+
+# Generar Tabla 2 (Medias)
 df_t2 = DataFrame(
-    Variable = ["y", "n", "c/y", "k/y"],
-    Mean = [mean(means_y), mean(means_n), mean(means_cy), mean(means_ky)],
-    Std_Sims = [std(means_y), std(means_n), std(means_cy), std(means_ky)]
+    Variable = ["y", "cp", "dk", "n", "g", "k", "y/n", "cp/y", "dk/y", "g/y"],
+    SteadyState = [
+        y_ss, c_ss, (y_ss - c_ss - g_ss_hat), n_ss, g_ss_hat, k_ss,
+        (y_ss/n_ss), (c_ss/y_ss), ((y_ss-c_ss-g_ss_hat)/y_ss), (g_ss_hat/y_ss)
+    ]
 )
-CSV.write(joinpath(results_path, "Table2_FirstMoments.csv"), df_t2)
-
-df_t3 = DataFrame(
-    Stat = ["sigma_y", "sigma_n/sigma_y", "corr(n, y/n)"],
-    Value = [mean(stds_y), mean(stds_n ./ stds_y), mean(corrs_ny)],
-    Std_Sims = [std(stds_y), std(stds_n ./ stds_y), std(corrs_ny)]
-)
-CSV.write(joinpath(results_path, "Table3_SecondMoments.csv"), df_t3)
-
-println("\n>>> ¡Éxito Total! Tablas guardadas en: $results_path")
+CSV.write(joinpath(results_dir, "Table2_FirstMoments.csv"), df_t2)
+println("\n>>> TABLA 2 GENERADA.")

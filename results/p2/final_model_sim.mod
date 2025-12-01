@@ -7,17 +7,19 @@ varexo e_lambda e_mu;
 parameters beta theta delta gamma N rho_g g_ss lambda_ss;
 
 // Cargar parámetros estimados desde Octave
-@#include "parameters.inc"
+beta = 0.9926375361451395; delta = 0.021; theta = 0.339; N = 1369.0;
+lambda_ss = 0.0040282613306786424; gamma = 3.927072446951861; rho_g = 0.9905121477271471; g_ss = 0.014709744867656893;
+
 
 // Asignación
-beta      = beta_val;
-theta     = theta_val;
-delta     = delta_val;
-gamma     = gamma_val;
-N         = N_val;
-rho_g     = rho_g_val;
-g_ss      = g_ss_val;
-lambda_ss = lambda_val;
+
+
+
+
+
+
+
+
 
 model;
     // --- Bloque del Modelo RBC Estacionario ---
@@ -53,24 +55,12 @@ model;
 end;
 
 // --- Bloque de Estado Estacionario ---
-steady_state_model;
-    lambda = lambda_ss;
-    g = g_ss;
 
-    // 1. CORRECCIÓN DEL RATIO Y/K (incluye crecimiento exp(lambda_ss))
-    yk_ratio = (exp(lambda_ss)/beta - (1-delta)) / theta;
-    
-    // Solución para n (la fórmula es compleja pero se mantiene si yk_ratio es correcto)
-    n = ( (1-theta)*yk_ratio*(N-g/yk_ratio) ) / ( gamma*(1-delta) + (1-theta)*yk_ratio );
-    
-    // Cálculo de k y y
-    k = (n^(1-theta) / yk_ratio)^(1/theta);
-    y = k * yk_ratio;
-    
-    // 2. CORRECCIÓN DE C (Consumo en estado estacionario)
-    // c = y - Inversión_SS - g. Donde Inversión_SS = k * (exp(lambda_ss) - (1-delta))
-    c = y - k*(exp(lambda_ss) - (1-delta)) - g;
-
-    dy_obs = lambda*100;
-    h_obs = log(n);
+initval;
+    lambda=0.0040282613306786424; g=0.014709744867656893; n=298.6227955623073; k=10375.954658595983; y=994.2366965133898; c=735.4899265136936;
+    w=2.200737740592977;
+    dy_obs=0.40282613306786424; h_obs=5.699181223659103;
 end;
+
+shocks; var e_lambda; stderr 0.010760979630996634; var e_mu; stderr 0.012391; end;
+steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);
