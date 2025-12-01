@@ -1,0 +1,4 @@
+Stat,Value,Std_Sims
+sigma_y,NaN,NaN
+sigma_n/sigma_y,NaN,NaN
+"corr(n, y/n)",NaN,NaN

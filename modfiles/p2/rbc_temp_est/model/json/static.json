@@ -1,0 +1,33 @@
+{"static_model": {"model_local_variables": [], "external_functions_temporary_terms_": [], "temporary_terms_": [], 
+"residuals":[
+{"residual": {"lhs": "1/beta", "rhs": "(1-delta)*exp((-lambda))+theta*y_bar/k_bar"}}
+, {"residual": {"lhs": "c_bar+k_bar-exp((-lambda))*(1-delta)*k_bar", "rhs": "y_bar"}}
+, {"residual": {"lhs": "y_bar", "rhs": "n^(1-theta)*(exp((-lambda))*k_bar)^theta"}}
+, {"residual": {"lhs": "c_bar*gamma/(N-n)", "rhs": "(1-theta)*y_bar/n"}}
+, {"residual": {"lhs": "log(g_bar)", "rhs": "(1-rho_g)*log(g_ss)+log(g_bar)*rho_g+eps_mu"}}
+, {"residual": {"lhs": "lambda", "rhs": "lambda_ss+eps_lambda"}}
+, {"residual": {"lhs": "dy_obs", "rhs": "lambda*100"}}
+, {"residual": {"lhs": "h_obs", "rhs": "log(n)-log(STEADY_STATE(n))"}}
+
+]
+, "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 8, "ncols": 8, "entries": [{"eq": 1, "col": 2, "var": "k_bar", "val": "(-((-(theta*y_bar))/(k_bar*k_bar)))"}
+, {"eq": 1, "col": 3, "var": "y_bar", "val": "(-(theta/k_bar))"}
+, {"eq": 1, "col": 6, "var": "lambda", "val": "(-((1-delta)*(-exp((-lambda)))))"}
+, {"eq": 2, "col": 1, "var": "c_bar", "val": "1"}
+, {"eq": 2, "col": 2, "var": "k_bar", "val": "1-(1-delta)*exp((-lambda))"}
+, {"eq": 2, "col": 3, "var": "y_bar", "val": "(-1)"}
+, {"eq": 2, "col": 6, "var": "lambda", "val": "(-((1-delta)*k_bar*(-exp((-lambda)))))"}
+, {"eq": 3, "col": 2, "var": "k_bar", "val": "(-(n^(1-theta)*exp((-lambda))*get_power_deriv(exp((-lambda))*k_bar,theta,1)))"}
+, {"eq": 3, "col": 3, "var": "y_bar", "val": "1"}
+, {"eq": 3, "col": 4, "var": "n", "val": "(-((exp((-lambda))*k_bar)^theta*get_power_deriv(n,1-theta,1)))"}
+, {"eq": 3, "col": 6, "var": "lambda", "val": "(-(n^(1-theta)*get_power_deriv(exp((-lambda))*k_bar,theta,1)*k_bar*(-exp((-lambda)))))"}
+, {"eq": 4, "col": 1, "var": "c_bar", "val": "gamma/(N-n)"}
+, {"eq": 4, "col": 3, "var": "y_bar", "val": "(-((1-theta)*1/n))"}
+, {"eq": 4, "col": 4, "var": "n", "val": "c_bar*gamma/((N-n)*(N-n))-(1-theta)*(-y_bar)/(n*n)"}
+, {"eq": 5, "col": 5, "var": "g_bar", "val": "1/g_bar-rho_g*1/g_bar"}
+, {"eq": 6, "col": 6, "var": "lambda", "val": "1"}
+, {"eq": 7, "col": 6, "var": "lambda", "val": "(-100)"}
+, {"eq": 7, "col": 7, "var": "dy_obs", "val": "1"}
+, {"eq": 8, "col": 4, "var": "n", "val": "(-(1/n-1/STEADY_STATE(n)))"}
+, {"eq": 8, "col": 8, "var": "h_obs", "val": "1"}
+]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 8, "ncols": 64, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 8, "ncols": 512, "entries": []}}}

@@ -1,0 +1,5 @@
+Parameter,Estimate
+theta,0.33
+rho_g,0.98
+sigma_lambda,0.01
+sigma_mu,0.01

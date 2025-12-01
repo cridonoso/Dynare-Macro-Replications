@@ -84,14 +84,34 @@ function process_usa_data(fred_codes::Dict, start_date::Date, end_date::Date)
     df_merged.g_lvl = log.(df_merged.G_raw ./ df_merged.N_raw)
     df_merged.h_lvl = log.(df_merged.H_raw ./ df_merged.N_raw)
 
-    # B. Filtro HP (Ciclos) para Tablas 2 y 3
-    # Usamos lambda=1600 para datos trimestrales
-    df_merged.y_cycle = hp_filter(df_merged.y_lvl)
-    df_merged.c_cycle = hp_filter(df_merged.c_lvl)
-    df_merged.i_cycle = hp_filter(df_merged.i_lvl)
-    df_merged.g_cycle = hp_filter(df_merged.g_lvl)
-    df_merged.h_cycle = hp_filter(df_merged.h_lvl)
+    # B. Filtro HP (Ciclos) para Tablas 2 y 3 (Estadísticas de Negocios)
+    try
+        df_merged.y_cycle = hp_filter(df_merged.y_lvl)
+        df_merged.c_cycle = hp_filter(df_merged.c_lvl)
+        df_merged.i_cycle = hp_filter(df_merged.i_lvl)
+        df_merged.g_cycle = hp_filter(df_merged.g_lvl)
+        df_merged.h_cycle = hp_filter(df_merged.h_lvl)
+    catch e
+        println("Warning: hp_filter function not found or failed. Skipping HP columns.")
+    end
 
-    # Retornamos todo: Niveles para calibrar, Ciclos para comparar momentos
+    # C. Variables para Estimación (Observables Estacionarios para Dynare)
+    println(">>> Generating Estimation Observables (Growth Rates & Demeaned)...")
+
+    # 1. Crecimiento del PIB (dy_obs)
+    # Calculamos la primera diferencia logarítmica multiplicada por 100.
+    # [missing; ...] se usa para mantener la longitud del vector alineada con el DataFrame.
+    dy_val = diff(df_merged.y_lvl) .* 100
+    df_merged.dy_obs = [missing; dy_val]
+
+    # 2. Horas Desviadas (h_obs)
+    # Logaritmo de horas menos su media muestral.
+    df_merged.h_obs = df_merged.h_lvl .- mean(df_merged.h_lvl)
+
+    # Limpieza final:
+    # Eliminamos la primera fila porque 'dy_obs' será 'missing' (resultado de diff)
+    dropmissing!(df_merged)
+
+    # Retornamos todo: Niveles, Ciclos HP y Observables para estimación
     return df_merged
 end

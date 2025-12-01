@@ -1,0 +1,21 @@
+Dynare version: 0.10.4
+2025-12-01T13:51:31.466: Starting @dynare /home/epsilon/Documents/doctorado/S2/ENECO670/martinez/tarea_computacional/presentation/../modfiles/p2/rbc_final_run_std.mod
+["rbc_final_run_std.mod", "language=julia", "json=compute", "notmpterms"]
+Dynare preprocessor version: 7.0.0+0
+2025-12-01T13:51:31.488: End of preprocessing
+2025-12-01T13:51:31.510: Start parse_statements!
+  Steady state
+
+────────┬─────────
+ c_bar  │ 733.401
+  k_bar │  9905.9
+  y_bar │ 984.967
+      n │ 316.686
+  g_bar │   186.0
+ lambda │  0.0045
+ dy_obs │    0.45
+  h_obs │     0.0
+────────┴─────────
+
+2025-12-01T13:51:32.072: End parse_statements!
+2025-12-01T13:51:32.072: End parser
