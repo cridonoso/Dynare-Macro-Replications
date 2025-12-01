@@ -14,19 +14,19 @@ include(joinpath(source_dir, "utils.jl"))
 include(joinpath(source_dir, "data.jl"))
 
 # --- Data Parameters ---
-start_date = Date(1955, 1, 1)
-# end_date   = Date(1984, 1, 1) # paper
-end_date   = Date(2025, 1, 1)
+# Período del paper: 1955:Q3 a 1983:Q4. Usamos un rango un poco más amplio para el procesamiento.
+start_date = Date(1955, 7, 1)
+end_date   = Date(1983, 10, 1)
 
-# DICCIONARIO CORREGIDO SEGÚN PAPER:
+# DICCIONARIO DE SERIES DE FRED
+# NOTA: Hay diferencias con la metodología exacta del paper (ver README.md o comentarios).
 fred_codes = Dict(
-        "GDPC1"   => "Y_raw",      # Real GDP (Trimestral)
-        "PCND"    => "C_Nom_ND",   # Nominal Nondurables (Mensual/Trim) - REEMPLAZA PCNDGC96
-        "PCESV"   => "C_Nom_SV",   # Nominal Services (Mensual/Trim) - REEMPLAZA PCESVC96
-        "GDPDEF"  => "P_Deflator", # GDP Deflator (Trimestral, Index 2012=100)
-        "GCEC1"   => "G_raw",      # Real Govt Spending
-        "HOANBS"  => "H_raw",      # Hours (Trimestral)
-        "CNP16OV" => "N_raw"       # Population (Mensual)
+    # Producto y Componentes
+    "GDPC1"   => "Y_raw",      # Real GDP
+    
+    # Mercado Laboral y Población
+    "HOANBS"  => "H_raw",      # Nonfarm Business Sector: Hours of All Persons (Fuente: BLS)
+    "CNP16OV" => "N_raw"       # Civilian Noninstitutional Population (16+) (Fuente: BLS)
 )
 
 # --- 3. EXECUTION ---

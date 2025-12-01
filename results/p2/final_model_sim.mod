@@ -8,7 +8,7 @@ parameters beta theta delta gamma N rho_g g_ss lambda_ss;
 
 // Cargar parámetros estimados desde Octave
 beta = 0.9926375361451395; delta = 0.021; theta = 0.339; N = 1369.0;
-lambda_ss = 0.0040282613306786424; gamma = 3.927072446951861; rho_g = 0.9905121477271471; g_ss = 0.014709744867656893;
+lambda_ss = 0.002729062395202624; gamma = 3.471000965814435; rho_g = 0.9080934280270355; g_ss = 0.009424797768710092;
 
 
 // Asignación
@@ -57,10 +57,10 @@ end;
 // --- Bloque de Estado Estacionario ---
 
 initval;
-    lambda=0.0040282613306786424; g=0.014709744867656893; n=298.6227955623073; k=10375.954658595983; y=994.2366965133898; c=735.4899265136936;
-    w=2.200737740592977;
-    dy_obs=0.40282613306786424; h_obs=5.699181223659103;
+    lambda=0.002729062395202624; g=0.009424797768710092; n=299.3573495672724; k=11071.58259873759; y=1018.0019977013006; c=755.9491412932015;
+    w=2.2478129281049903;
+    dy_obs=0.2729062395202624; h_obs=5.701638008823012;
 end;
 
-shocks; var e_lambda; stderr 0.010760979630996634; var e_mu; stderr 0.012391; end;
+shocks; var e_lambda; stderr 0.011860314785030671; var e_mu; stderr 0.012391; end;
 steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);
