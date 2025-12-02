@@ -1,8 +1,8 @@
 Statistic,Value
-sigma_c / sigma_y,4.4
-sigma_dk / sigma_y,8.89
-sigma_n / sigma_y,2.72
+sigma_c / sigma_y,4.25
+sigma_dk / sigma_y,8.36
+sigma_n / sigma_y,2.58
 sigma_r / sigma_y/n,1.0
-sigma_g / sigma_y,8.31
-sigma_y,0.19
+sigma_g / sigma_y,8.96
+sigma_y,0.18
 "corr(y/n, n)",-1.0

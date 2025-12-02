@@ -3,19 +3,21 @@
 // -------------------------------------------------------------------------
 // 1. Variable and Parameter Declaration
 // -------------------------------------------------------------------------
-var c $c$ (long_name='aggregate consumption')
-    k $k$ (long_name='capital stock')
-    invest $i$ (long_name='investment')
-    leisure $l$ (long_name='leisure')
-    hM $h_M$ (long_name='market hours')
-    hH $h_H$ (long_name='home hours')
-    cM $c_M$ (long_name='market consumption')
-    cH $c_H$ (long_name='home consumption')
-    yM $y_M$ (long_name='market output')
-    yH $y_H$ (long_name='home output')
-    zM $z_M$ (long_name='market TFP shock')
-    zH $z_H$ (long_name='home TFP shock')
-    productivity (long_name='market productivity');
+var c $c$ (long_name='aggregate consumption') // Consumo Agregado
+    k $k$ (long_name='capital stock') // Capital
+    invest $i$ (long_name='investment') // Inversión
+    leisure $l$ (long_name='leisure') // Ocio
+    hM $h_M$ (long_name='market hours') // Horas de Mercado
+    hH $h_H$ (long_name='home hours') // Horas en Casa
+    cM $c_M$ (long_name='market consumption') // Consumo de Mercado
+    cH $c_H$ (long_name='home consumption') // Consumo en Casa
+    yM $y_M$ (long_name='market output') // Producto de Mercado
+    yH $y_H$ (long_name='home output') // Producto en Casa
+    zM $z_M$ (long_name='market TFP shock') // Shock PTF Mercado
+    zH $z_H$ (long_name='home TFP shock') // Shock PTF Casa
+    productivity (long_name='market productivity') // Productividad de Mercado
+    y (long_name='aggregate output alias') // Alias para yM
+    h (long_name='market hours alias'); // Alias para hM
 
 varexo eM eH; 
 
@@ -87,7 +89,10 @@ alpha*cM^(e-1)*c^(1-e)*(1-theta)*(yM/hM)
 // 12. Consumption vs Leisure Condition
 A/leisure = (1/(2*c)) * (alpha*cM^(e-1)*c^(1-e)*(1-theta)*(yM/hM) + (1-alpha)*cH^(e-1)*c^(1-e)*(1-eta)*(yH/hH));
 
+// --- Definiciones para compatibilidad con scripts de Julia ---
 productivity = yM / hM;
+y = yM;
+h = hM;
 end;
 
 // -------------------------------------------------------------------------
@@ -116,7 +121,9 @@ yM = kM^theta * hM^(1-theta);
 cM = yM - invest;                                  
 yH = kH^eta * hH^(1-eta);                     
 cH = yH;                                      
-c = (alpha*cM^e + (1-alpha)*cH^e)^(1/e);      
+c = (alpha*cM^e + (1-alpha)*cH^e)^(1/e);
+y = yM;
+h = hM;      
 end;
 
 // -------------------------------------------------------------------------

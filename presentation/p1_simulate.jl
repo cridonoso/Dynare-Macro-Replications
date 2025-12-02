@@ -1,117 +1,160 @@
-# Runs Monte Carlo simulations for Part I (RBC Models).
+# 
 using Dynare
 using DelimitedFiles
 using Statistics
-using Plots
 using LinearAlgebra
 using CSV
 using DataFrames
+using StatsBase
 
-# --- Configuration ---
+# --- Configuración ---
 project_root = joinpath(@__DIR__, "..")
 source_dir   = joinpath(project_root, "source")
-N_ITERATIONS = 10000
-T_PERIODS    = 200
-LANGUAGE     = "ES" # Options: "EN" or "ES"
+N_ITERATIONS = 10000 
+T_PERIODS    = 200     
 
-# --- Load Utilities ---
-include(joinpath(source_dir, "utils.jl"))
+# --- Cargar Utilidades ---
+include(joinpath(source_dir, "utils.jl")) 
 include(joinpath(source_dir, "simulation.jl"))
-include(joinpath(source_dir, "plots.jl"))
 
-# --- Model Selection ---
+# --- Helper: Simulación de Series de Tiempo ---
+# Esta función corrige el error "simulate_time_series not defined"
+function simulate_time_series(sol, T)
+    # 1. Obtener dimensión de shocks (eps_a)
+    n_shocks = size(sol.ghu, 2)
+    # 2. Generar shocks N(0,1). Nota: La matriz GHU de Dynare ya incluye 
+    #    la desviación estándar (sigma_eps) si se declaró en 'shocks' del .mod.
+    shocks = randn(n_shocks, T)
+    # 3. Simular usando la función core de simulation.jl
+    #    Retorna (desviaciones, niveles). Usamos niveles para filtrar después.
+    _, sim_lvl = simulate_model_core(sol, shocks)
+    return sim_lvl
+end
+
+# --- Helper: Calcular Estadísticas Hansen & Wright (Tabla 3) ---
+function calculate_hansen_stats(sim_lvl, vars_map)
+    # Mapeo de variables requeridas
+    # Ajusta los nombres según tu archivo .mod (invest vs i, productivity vs p, etc.)
+    keys_req = ["y", "c", "invest", "h", "productivity"]
+    
+    # Matriz para guardar ciclos HP
+    T = size(sim_lvl, 1)
+    cycles = Dict{String, Vector{Float64}}()
+
+    # 1. Aplicar Log y Filtro HP a cada variable de interés
+    for v in keys_req
+        if !haskey(vars_map, v)
+            error("Variable $v no encontrada en el modelo. Verifica nombres en .mod")
+        end
+        idx = vars_map[v]
+        raw_series = sim_lvl[:, idx]
+        
+        # Logaritmo (protegido contra valores negativos/cero)
+        log_series = log.(max.(raw_series, 1e-8))
+        
+        # Filtro HP (lambda=1600 para trimestral)
+        cycles[v] = hp_filter(log_series, 1600.0)
+    end
+
+    # 2. Calcular Desviaciones Estándar
+    # NO se multiplica por 100 aquí. La tabla final puede formatear si es necesario.
+    # El problema de los valores "outlier" venía de aquí.
+    sd = Dict(k => std(cycles[k]) for k in keys_req)
+    
+    # 3. Calcular Correlaciones
+    # Hansen Table 3 Columns:
+    # Col 1: SD Output
+    stat_sy = sd["y"]
+    
+    # Col 2-5: Relative SD vs Output
+    stat_sc_sy = sd["c"] / sd["y"]
+    stat_si_sy = sd["invest"] / sd["y"]
+    stat_sh_sy = sd["h"] / sd["y"]
+    stat_sp_sy = sd["productivity"] / sd["y"]
+    
+    # Col 6: Relative SD Hours vs Productivity
+    stat_sh_sp = sd["h"] / sd["productivity"]
+    
+    # Col 7: Correlation Hours vs Productivity
+    stat_corr_hp = cor(cycles["h"], cycles["productivity"])
+    
+    return [stat_sy, stat_sc_sy, stat_si_sy, stat_sh_sy, stat_sp_sy, stat_sh_sp, stat_corr_hp]
+end
+
+# --- Loop Principal ---
 target_models = ["1", "2", "3", "4", "5"]
-
-# Check for command-line flags
 idx = findfirst(x -> x == "--model" || x == "-m", ARGS)
 if idx !== nothing && idx < length(ARGS)
     target_models = [ARGS[idx+1]]
 end
-plot_only_mode = "--plot-only" in ARGS
 
-if plot_only_mode
-    println("--- Running in PLOT-ONLY mode. Simulations will be skipped. ---")
-end
-
-# --- Main Loop ---
 for model_id in target_models
+    println("\n>>> Procesando Modelo $model_id...")
     mod_file = "$model_id.mod"
     mod_path = joinpath(project_root, "modfiles", "p1", mod_file)
     res_path = joinpath(project_root, "results", "p1", "$model_id")
+    mkpath(res_path)
     
     if !isfile(mod_path)
+        println("Advertencia: No se encontró $mod_path")
         continue
     end
+
+    # 1. Resolver modelo con Dynare
+    println("--- (Ítems 1-3) Solucionando modelo... ---")
+    original_dir = pwd()
+    cd(dirname(mod_path))
+    context = eval(:(@dynare $mod_file)) 
+    cd(original_dir)
     
-    # Define path for raw simulation data
-    raw_data_path = joinpath(res_path, "raw_simulation_results.csv")
+    # Extraer solución y mapa de variables
+    sys = extract_solution(context)
     
-    # --- Data Generation or Loading ---
-    if !plot_only_mode
-        println("--- Running full simulation for Model $model_id ---")
-        # 1. Solve model with Dynare
-        original_dir = pwd()
-        cd(dirname(mod_path))
-        ctx = eval(:(@dynare $mod_file)) 
-        cd(original_dir)
-        organize_model_output(mod_path, res_path)
-        
-        # 2. Extract solution matrices
-        sol = extract_solution(ctx)
-        
-        # 3. Define a processor function for the Monte Carlo simulation
-        my_processor(d, l) = procesar_momentos_rbc(d, l, sol.endo_names)
+    # Crear mapa de nombres a índices
+    var_names = sys.endo_names
+    vars_map = Dict(name => i for (i, name) in enumerate(var_names))
+    
+    # ---------------------------------------------------------
+    # ITEM 4: Simular modelo estocástico para 200 periodos
+    # ---------------------------------------------------------
+    println("--- (Ítem 4) Guardando simulación única de 200 periodos ---")
+    
+    # Generar una simulación
+    sim_lvl_single = simulate_time_series(sys, T_PERIODS)
+    
+    # Guardar en CSV para graficar o inspeccionar
+    df_sim = DataFrame(sim_lvl_single, var_names)
+    single_sim_path = joinpath(res_path, "item4_single_simulation.csv")
+    CSV.write(single_sim_path, df_sim)
+    println("    -> Guardado en: $single_sim_path")
 
-        # 4. Run Monte Carlo simulation
-        raw_results = monte_carlo_generic(sol, my_processor; N=N_ITERATIONS, T=T_PERIODS)
+    # ---------------------------------------------------------
+    # ITEM 5: Simular 10,000 series y calcular estadísticas
+    # ---------------------------------------------------------
+    println("--- (Ítem 5) Ejecutando Monte Carlo ($N_ITERATIONS iters) ---")
+    
+    mc_stats = zeros(N_ITERATIONS, 7)
+    
+    # Loop Monte Carlo
+    # (Se podría usar Threads.@threads para acelerar)
+    for i in 1:N_ITERATIONS
+        if i % 1000 == 0; print("."); end
         
-        # 5. Unpack and aggregate results into matrices
-        n_vars = length(sol.endo_names)
-        mat_std  = zeros(N_ITERATIONS, n_vars)
-        mat_rel  = zeros(N_ITERATIONS, n_vars)
-        mat_corr = zeros(N_ITERATIONS, n_vars)
+        # a. Simular trayectoria
+        data_i = simulate_time_series(sys, T_PERIODS)
         
-        for i in 1:N_ITERATIONS
-            mat_std[i, :], mat_rel[i, :], mat_corr[i, :] = raw_results[i]
-        end
-        
-        # 6. Save raw simulation data for faster re-plotting
-        df_raw = DataFrame()
-        for (i, var_name) in enumerate(sol.endo_names)
-            df_raw[!, "rel_std_$(var_name)"] = mat_rel[:, i]
-            df_raw[!, "corr_$(var_name)"] = mat_corr[:, i]
-        end
-        CSV.write(raw_data_path, df_raw)
-        println(">>> Raw simulation data saved to: $raw_data_path")
-
-        # 7. Calculate and save summary statistics
-        m_std  = mean(mat_std, dims=1)[:]
-        m_rel  = mean(mat_rel, dims=1)[:]
-        m_corr = mean(mat_corr, dims=1)[:]
-        
-        csv_out = joinpath(res_path, "moments_summary.csv")
-        open(csv_out, "w") do io
-            println(io, "Statistic," * join(sol.endo_names, ","))
-            println(io, "StdDev," * join(m_std, ","))
-            println(io, "RelStdDev," * join(m_rel, ","))
-            println(io, "CorrWithY," * join(m_corr, ","))
-        end
+        # b. Calcular estadísticas (HP filter -> SDs -> Corrs)
+        mc_stats[i, :] = calculate_hansen_stats(data_i, vars_map)
     end
-
-    # 8. Generate and save histograms for key variables
-    println("--- Generating plots for Model $model_id ---")
-    if !isfile(raw_data_path)
-        println("ERROR: Raw data file not found. Run simulation without --plot-only first.")
-        continue
-    end
-    df_raw = CSV.read(raw_data_path, DataFrame)
-
-    vars = ["y", "c", "i", "h", "yM", "hM", "productivity"]
-    for v in vars
-        rel_std_col = "rel_std_$(v)"
-        corr_col = "corr_$(v)"
-        if rel_std_col in names(df_raw) && corr_col in names(df_raw)
-            Plotting.plot_moments_histograms(LANGUAGE, model_id, v, df_raw[!, rel_std_col], df_raw[!, corr_col], res_path)
-        end
-    end
+    println("")
+    
+    # Guardar resultados
+    headers = ["sigma_y", "rel_sigma_c", "rel_sigma_i", "rel_sigma_h", "rel_sigma_p", "rel_sigma_h_p", "corr_h_p"]
+    df_mc = DataFrame(mc_stats, headers)
+    
+    mc_file = joinpath(res_path, "item5_montecarlo_results.csv")
+    CSV.write(mc_file, df_mc)
+    println("    -> Resultados Monte Carlo guardados en: $mc_file")
+    
+    println(">>> Modelo $model_id finalizado. Ejecuta p1_get_table.jl")
 end

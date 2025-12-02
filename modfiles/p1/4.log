@@ -1,0 +1,21 @@
+Dynare version: 0.10.4
+2025-12-01T23:28:18.521: Starting @dynare 4.mod
+["4.mod", "language=julia", "json=compute", "notmpterms"]
+Dynare preprocessor version: 7.0.0+0
+2025-12-01T23:28:18.536: End of preprocessing
+2025-12-01T23:28:18.541: Start parse_statements!
+  Steady state
+
+─────────────────────┬──────────
+     consumption     │ 0.646475
+          investment │   0.3166
+              output │   1.2347
+       capital stock │  12.6631
+               hours │   0.3333
+           TFP shock │      0.0
+ government spending │   0.2716
+  labor productivity │   3.7041
+─────────────────────┴──────────
+
+2025-12-01T23:28:18.676: End parse_statements!
+2025-12-01T23:28:18.677: End parser

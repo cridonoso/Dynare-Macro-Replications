@@ -16,14 +16,13 @@ include(joinpath(source_dir, "data.jl"))
 # --- Data Parameters ---
 # Período del paper: 1955:Q3 a 1983:Q4. Usamos un rango un poco más amplio para el procesamiento.
 start_date = Date(1955, 7, 1)
-end_date   = Date(1983, 10, 1)
+end_date   = Date(2023, 10, 1)
+# end_date   = Date(1983, 10, 1)
 
 # DICCIONARIO DE SERIES DE FRED
-# NOTA: Hay diferencias con la metodología exacta del paper (ver README.md o comentarios).
 fred_codes = Dict(
     # Producto y Componentes
     "GDPC1"   => "Y_raw",      # Real GDP
-    
     # Mercado Laboral y Población
     "HOANBS"  => "H_raw",      # Nonfarm Business Sector: Hours of All Persons (Fuente: BLS)
     "CNP16OV" => "N_raw"       # Civilian Noninstitutional Population (16+) (Fuente: BLS)

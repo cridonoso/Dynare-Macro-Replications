@@ -1,13 +1,14 @@
 /* RBC Model with Government Spending */
 
 // 1. Variable and Parameter Declaration
-var c $c$ (long_name='consumption')
-    invest $i$ (long_name='investment')
-    y $y$ (long_name='output')
-    k $k$ (long_name='capital stock')
-    h $h$ (long_name='hours')
-    z $z$ (long_name='TFP shock')
-    g $g$ (long_name='government spending');
+var c (long_name='consumption')
+    invest (long_name='investment')
+    y (long_name='output')
+    k (long_name='capital stock')
+    h (long_name='hours')
+    z (long_name='TFP shock')
+    g (long_name='government spending')
+    productivity (long_name='labor productivity');
 
 varexo e_z e_g;
 
@@ -44,6 +45,8 @@ model;
     1/c = beta*(1/c(+1))*(theta*exp(z(+1))*k^(theta-1)*h(+1)^(1-theta) + 1 - delta);
     // 7. Labor supply
     A/(1-h) = (1/c) * (1-theta) * y / h;
+    // 8. Definición de Productividad
+    productivity = y / h;
 end;
 
 // 4. Steady State Calculation
@@ -57,6 +60,7 @@ steady_state_model;
     invest = delta*k;
     c = y - invest - g;
     A = (1-theta)*(y/h)/c * (1-h);
+    productivity = y / h;
 end;
 
 steady;
