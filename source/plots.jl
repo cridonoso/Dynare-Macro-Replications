@@ -261,7 +261,6 @@ function plot_combined_histograms(lang, data_dict, output_dir)
     println("    -> Gráfico de densidades guardado: $fname")
 end
 
-# ... Mantén aquí plot_scatter_hp si la usas ...
 function plot_scatter_hp(lang, h_data, p_data, model_id, output_dir)
     labels = Dict(
         "EN" => (title = "Model $model_id: Hours vs Productivity", xlabel = "Hours (%)", ylabel = "Productivity (%)"),
@@ -276,13 +275,42 @@ function plot_scatter_hp(lang, h_data, p_data, model_id, output_dir)
 end
 
 """
+    plot_loss_comparison(lang, scenario_name, data_current, data_forward, output_dir)
+    
+    Genera histograma individual para un escenario.
+"""
+function plot_loss_comparison(lang, scenario_name, data_current, data_forward, output_dir)
+    titles = Dict(
+        "1_Technology" => Dict("EN" => "Technology Shock", "ES" => "Shock Tecnológico"),
+        "2_Demand"     => Dict("EN" => "Demand Shock", "ES" => "Shock de Demanda"),
+        "3_Both"       => Dict("EN" => "Both Shocks", "ES" => "Ambos Shocks")
+    )
+    
+    labels = Dict(
+        "EN" => (title="Welfare Loss Distribution", xlabel="Loss (L)", m1="Current-Looking", m2="Forward-Looking"),
+        "ES" => (title="Distribución de Pérdida de Bienestar", xlabel="Pérdida (L)", m1="Regla Contemporánea", m2="Regla Forward-Looking")
+    )
+    
+    scen_title = get(titles, scenario_name, Dict("EN"=>scenario_name, "ES"=>scenario_name))[lang]
+    txt = labels[lang]
+
+    p = plot(title="$(txt.title): $scen_title", xlabel=txt.xlabel, ylabel=(lang=="EN" ? "Density" : "Densidad"))
+    
+    density!(p, data_current, label=txt.m1, color=:dodgerblue, linewidth=2.5, fill=true, alpha=0.3)
+    density!(p, data_forward, label=txt.m2, color=:orange, linewidth=2.5, fill=true, alpha=0.3)
+    
+    fname = joinpath(output_dir, "hist_comparison_$(scenario_name)_$(lang).pdf")
+    savefig(p, fname)
+    println("    -> Gráfico individual guardado: $fname")
+end
+
+"""
     plot_p3_combined_histograms(lang, all_data, scenarios_list, output_dir)
 
-Genera una figura combinada (1 fila x 3 columnas) con las densidades de pérdida de bienestar
-para los tres escenarios de shock.
+Genera una figura combinada (1 fila x 3 columnas) con LEYENDA COMPARTIDA.
+CORREGIDO: Ajuste de altura para evitar error 'Plot height too small' en PGFPlots.
 """
 function plot_p3_combined_histograms(lang, all_data, scenarios_list, output_dir)
-    # Configuración de Etiquetas
     titles_map = Dict(
         "1_Technology" => Dict("EN" => "Technology Shock", "ES" => "Shock Tecnológico"),
         "2_Demand"     => Dict("EN" => "Demand Shock", "ES" => "Shock de Demanda"),
@@ -294,58 +322,80 @@ function plot_p3_combined_histograms(lang, all_data, scenarios_list, output_dir)
         "gali_forward" => Dict("EN" => "Forward-Looking", "ES" => "Regla Forward-Looking")
     )
 
-    # Colores consistentes
     colors = Dict("gali_current" => :dodgerblue, "gali_forward" => :orange)
-
     subplots = []
 
-    # Iterar sobre escenarios (ordenados)
+    # 1. Generar los 3 Subplots (SIN LEYENDA)
     for (scen_id, scen_key) in scenarios_list
-        # Título del subplot
         t = titles_map[scen_key][lang]
-        p = plot(title = t, titlefontsize = 10)
         
-        # Obtener datos del escenario
+        # legend=false para no repetir la caja en cada gráfico
+        p = plot(title = t, titlefontsize = 11, legend = false) 
+        
         scen_data = get(all_data, scen_id, Dict())
         
-        # Graficar cada modelo
         for m in ["gali_current", "gali_forward"]
             vals = get(scen_data, m, Float64[])
-            
             if !isempty(vals)
-                lbl = model_labels[m][lang]
-                
-                # Usamos density para una curva suave (mejor para comparar)
                 density!(p, vals, 
-                    label = lbl, 
+                    label = model_labels[m][lang], 
                     color = colors[m], 
                     linewidth = 2.5, 
-                    alpha = 0.8,
-                    fill = false # Solo línea
+                    alpha = 0.4,
+                    fill = true 
                 )
             end
         end
         
-        # Estilo del eje
-        xlabel_txt = lang == "EN" ? "Welfare Loss (L)" : "Pérdida (L)"
-        plot!(p, xlabel=xlabel_txt, yticks=:auto, ylabel = (lang=="EN" ? "Density" : "Densidad"))
-        
+        plot!(p, xlabel=(lang=="EN" ? "Loss (L)" : "Pérdida (L)"), yticks=:auto, ylabel="")
         push!(subplots, p)
     end
 
-    # Combinar en layout 1x3
-    # Usamos leyenda solo en el primer gráfico o uno compartido si prefieres
-    # Aquí la ponemos en :topright para cada uno, o podrías desactivarla en 2 y 3.
-    final_plot = plot(subplots..., 
-        layout = (1, 3), 
-        size = (1200, 400), # Ancho panorámico
-        margin = 5Plots.mm,
-        legend = :topright
+    # 2. Crear Gráfico "Fantasma" para la Leyenda
+    # CORRECCIÓN: axis=false, ticks=false explícitos para evitar cálculos de PGFPlots
+    legend_plot = plot(framestyle=:none, grid=false, axis=false, ticks=false,
+                       legend=:top, legend_columns=2, label="",
+                       top_margin=0Plots.mm, bottom_margin=0Plots.mm)
+    
+    # Líneas dummy para generar la leyenda
+    for m in ["gali_current", "gali_forward"]
+        plot!(legend_plot, [0], [0], 
+              label=model_labels[m][lang], 
+              color=colors[m], 
+              linewidth=2.5, 
+              fill=true, alpha=0.4) 
+    end
+
+    # 3. Combinar con Layout Ajustado
+    l = @layout [
+        grid(1, 3)
+        a{0.15h}  
+    ]
+
+    # CORRECCIÓN: Aumentamos altura total a 550px
+    final_plot = plot(subplots..., legend_plot, 
+        layout = l, 
+        size = (1200, 550), 
+        margin = 5Plots.mm
     )
     
-    fname = joinpath(output_dir, "p3_histograms_combined_1x3_$(lang).pdf")
+    fname = joinpath(output_dir, "p3_combined_histograms_$(lang).pdf")
     savefig(final_plot, fname)
-    println("    -> Gráfico P3 combinado guardado: $fname")
+    println("    -> Gráfico combinado guardado: $fname")
 end
 
-end # module Plotting
+# Función Scatter P1 (Mantenida por compatibilidad)
+function plot_scatter_hp(lang, h_data, p_data, model_id, output_dir)
+    labels = Dict(
+        "EN" => (title = "Model $model_id: Hours vs Productivity", xlabel = "Hours (%)", ylabel = "Productivity (%)"),
+        "ES" => (title = "Modelo $model_id: Horas vs Productividad", xlabel = "Horas (%)", ylabel = "Productividad (%)")
+    )
+    txt = labels[lang]
+    p = scatter(h_data, p_data, title=txt.title, xlabel=txt.xlabel, ylabel=txt.ylabel, legend=false,
+        color=:black, markersize=2, markerstrokewidth=0, alpha=0.6)
+    hline!(p, [0], color=:grey, linestyle=:dash, alpha=0.5)
+    vline!(p, [0], color=:grey, linestyle=:dash, alpha=0.5)
+    savefig(p, joinpath(output_dir, "scatter_h_p_$(lang).pdf"))
+end
+
+end # module
