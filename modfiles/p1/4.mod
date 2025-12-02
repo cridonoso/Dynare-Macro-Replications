@@ -68,8 +68,8 @@ check;
 
 // 5. Shocks and Simulation
 shocks;
-    var e_z; stderr 1;
-    var e_g; stderr 1;
+    var e_z; stderr 0.00712; 
+    var e_g; stderr 0.021;   
 end;
 
 stoch_simul(order=1, irf=0, noprint, nograph);

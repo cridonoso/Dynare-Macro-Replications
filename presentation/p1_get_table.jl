@@ -32,10 +32,11 @@ end
 
 # Estructura de la Tabla LaTeX
 latex_table = raw"""
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \caption{Propiedades Cíclicas: Comparación de Modelos vs Datos EE.UU.}
     \label{tab:res_model_comparison}
+     \resizebox{\textwidth}{!}{%
     \begin{tabular}{l c c c c c c c}
     \hline\hline
     & \textbf{\% S.D.} & \multicolumn{4}{c}{\textbf{Variable vs. Output}} & \multicolumn{2}{c}{\textbf{Hours vs. Productivity}} \\
@@ -58,12 +59,13 @@ end
 
 latex_table *= raw"""
     \hline
-    \end{tabular}
+    \end{tabular}%
+    }
     \footnotesize{Nota: Resultados promedio de 10,000 simulaciones de 200 periodos.}
 \end{table}
 """
 
-tex_path = joinpath(results_path, "comparison_table_all_models.tex")
+tex_path = joinpath(results_path, "comparison_p1.tex")
 open(tex_path, "w") do f
     write(f, latex_table)
 end

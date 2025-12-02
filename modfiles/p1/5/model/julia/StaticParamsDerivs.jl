@@ -4,8 +4,8 @@
 function static_params_derivs(y, x, params)
 @inbounds begin
 T = zeros(0)
-rp = zeros(15, 13);
-gp = zeros(15, 15, 13);
+rp = zeros(18, 10);
+gp = zeros(18, 18, 10);
 end
 return (rp, gp)
 end

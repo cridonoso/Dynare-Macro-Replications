@@ -18,20 +18,11 @@ include(joinpath(source_dir, "utils.jl"))
 include(joinpath(source_dir, "simulation.jl"))
 
 # --- Helper: Simulación de Series de Tiempo ---
-# Esta función corrige el error "simulate_time_series not defined"
 function simulate_time_series(sol, T)
-    # 1. Obtener dimensión de shocks (eps_a)
-    n_shocks = size(sol.ghu, 2)
-    # 2. Generar shocks N(0,1). Nota: La matriz GHU de Dynare ya incluye 
-    #    la desviación estándar (sigma_eps) si se declaró en 'shocks' del .mod.
-    shocks = randn(n_shocks, T)
-    # 3. Simular usando la función core de simulation.jl
-    #    Retorna (desviaciones, niveles). Usamos niveles para filtrar después.
-    _, sim_lvl = simulate_model_core(sol, shocks)
+    _, sim_lvl = simulate_model_core(sol, T)
     return sim_lvl
 end
 
-# --- Helper: Calcular Estadísticas Hansen & Wright (Tabla 3) ---
 function calculate_hansen_stats(sim_lvl, vars_map)
     # Mapeo de variables requeridas
     # Ajusta los nombres según tu archivo .mod (invest vs i, productivity vs p, etc.)
@@ -57,9 +48,7 @@ function calculate_hansen_stats(sim_lvl, vars_map)
     end
 
     # 2. Calcular Desviaciones Estándar
-    # NO se multiplica por 100 aquí. La tabla final puede formatear si es necesario.
-    # El problema de los valores "outlier" venía de aquí.
-    sd = Dict(k => std(cycles[k]) for k in keys_req)
+    sd = Dict(k => std(cycles[k]) * 100 for k in keys_req)
     
     # 3. Calcular Correlaciones
     # Hansen Table 3 Columns:

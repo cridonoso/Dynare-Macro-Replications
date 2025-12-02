@@ -1,0 +1,28 @@
+{"steady_state_model": [{"lhs": "hM", "rhs":"0.33"}
+,{"lhs": "hH", "rhs":"0.28"}
+,{"lhs": "leisure", "rhs":"1-hM-hH"}
+,{"lhs": "MPK_M", "rhs":"1/beta-(1-delta)"}
+,{"lhs": "yM_kM_ratio", "rhs":"MPK_M/theta"}
+,{"lhs": "kM", "rhs":"hM*yM_kM_ratio^(1/(theta-1))"}
+,{"lhs": "yM", "rhs":"kM^theta*hM^(1-theta)"}
+,{"lhs": "kH", "rhs":"kM*hH/hM*(1-theta)/theta*eta/(1-eta)"}
+,{"lhs": "yH", "rhs":"kH^eta*hH^(1-eta)"}
+,{"lhs": "cH", "rhs":"yH"}
+,{"lhs": "k", "rhs":"kM+kH"}
+,{"lhs": "invest", "rhs":"delta*k"}
+,{"lhs": "g", "rhs":"yM*0.2"}
+,{"lhs": "cM", "rhs":"yM-invest-g"}
+,{"lhs": "MPL_M", "rhs":"(1-theta)*yM/hM"}
+,{"lhs": "MPL_H", "rhs":"(1-eta)*yH/hH"}
+,{"lhs": "term1", "rhs":"MPL_M*cM^(e-1)"}
+,{"lhs": "term2", "rhs":"MPL_H*cH^(e-1)"}
+,{"lhs": "alpha", "rhs":"term2/(term1+term2)"}
+,{"lhs": "c", "rhs":"(alpha*cM^e+(1-alpha)*cH^e)^(1/e)"}
+,{"lhs": "RHS", "rhs":"MPL_M*cM^(e-1)*alpha*1/c*c^(1-e)"}
+,{"lhs": "A", "rhs":"leisure*RHS"}
+,{"lhs": "zM", "rhs":"0"}
+,{"lhs": "zH", "rhs":"0"}
+,{"lhs": "productivity", "rhs":"yM/hM"}
+,{"lhs": "y", "rhs":"yM"}
+,{"lhs": "h", "rhs":"hM"}
+]}

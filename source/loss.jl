@@ -5,17 +5,14 @@ using Statistics
 function get_weights(alppha, epsilon, theta, varphi)
     # Definimos los valores que get_weights necesita pero que vienen del scope global del script principal
     betta  = 0.99
-    siggma = 1.0 
-    
-    # Los argumentos deben ser los nombres alfanuméricos: alppha, epsilon, theta, varphi
-    
+    siggma = 1.0     
     # Parámetros compuestos intermedios (lambda)
     Omega = (1-alppha)/(1-alppha+alppha*epsilon)
     lambda = (1-theta)*(1-betta*theta)/theta * Omega
 
     # Pesos finales
     weight_y = siggma + (varphi + alppha)/(1-alppha)
-    weight_pi = epsilon / lambda # <-- weight_pi (inflación)
+    weight_pi = epsilon / lambda
     
     return weight_y, weight_pi # Retorna Wp como Wpi
 end

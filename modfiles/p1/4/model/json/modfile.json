@@ -61,7 +61,7 @@
 {"statementName": "param_init", "name": "A", "value": "2.4445"}, 
 {"statementName": "steady"}, 
 {"statementName": "check"}, 
-{"statementName": "shocks", "overwrite": false, "variance": [], "stderr": [{"name": "e_z", "stderr": "1"}, {"name": "e_g", "stderr": "1"}], "covariance": [], "correlation": []}, 
+{"statementName": "shocks", "overwrite": false, "variance": [], "stderr": [{"name": "e_z", "stderr": "0.00712"}, {"name": "e_g", "stderr": "0.021"}], "covariance": [], "correlation": []}, 
 {"statementName": "stoch_simul", "options": {"irf": 0, "nograph": true, "noprint": true, "order": 1}}]
 ,"model_info": {"lead_lag_incidence": [[ 0, 4, 12],[ 0, 5, 0],[ 0, 6, 0],[ 1, 7, 0],[ 0, 8, 13],[ 2, 9, 14],[ 3, 10, 0],[ 0, 11, 0]], "nstatic": 3, 
 "nfwrd": 2, 
