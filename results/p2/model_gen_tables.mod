@@ -58,9 +58,8 @@ end;
 
 initval;
     lambda=0.0037092270809439363; g=0.011815215971179738; n=299.6345420764695; k=10569.528886907488; y=1002.725569817462; c=742.4432605220085;
-    w=2.212033355887885;
     dy_obs=0.37092270809439365; h_obs=5.702563538977429;
 end;
 
-shocks; var e_lambda; stderr 0.010951545078475289; var e_mu; stderr 0.012391; end;
+shocks; var e_lambda; stderr 0.010951545078475289; var e_mu; stderr 1.0e-8; end;
 steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);

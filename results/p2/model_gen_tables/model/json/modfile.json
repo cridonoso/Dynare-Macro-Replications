@@ -64,8 +64,8 @@
 {"statementName": "param_init", "name": "gamma", "value": "3.3483073360077786"}, 
 {"statementName": "param_init", "name": "rho_g", "value": "0.9958903794772136"}, 
 {"statementName": "param_init", "name": "g_ss", "value": "0.011815215971179738"}, 
-{"statementName": "initval", "vals": [{"name": "lambda", "value": "0.0037092270809439363"}, {"name": "g", "value": "0.011815215971179738"}, {"name": "n", "value": "299.6345420764695"}, {"name": "k", "value": "10569.528886907488"}, {"name": "y", "value": "1002.725569817462"}, {"name": "c", "value": "742.4432605220085"}, {"name": "w", "value": "2.212033355887885"}, {"name": "dy_obs", "value": "0.37092270809439365"}, {"name": "h_obs", "value": "5.702563538977429"}]}, 
-{"statementName": "shocks", "overwrite": false, "variance": [], "stderr": [{"name": "e_lambda", "stderr": "0.010951545078475289"}, {"name": "e_mu", "stderr": "0.012391"}], "covariance": [], "correlation": []}, 
+{"statementName": "initval", "vals": [{"name": "lambda", "value": "0.0037092270809439363"}, {"name": "g", "value": "0.011815215971179738"}, {"name": "n", "value": "299.6345420764695"}, {"name": "k", "value": "10569.528886907488"}, {"name": "y", "value": "1002.725569817462"}, {"name": "c", "value": "742.4432605220085"}, {"name": "dy_obs", "value": "0.37092270809439365"}, {"name": "h_obs", "value": "5.702563538977429"}]}, 
+{"statementName": "shocks", "overwrite": false, "variance": [], "stderr": [{"name": "e_lambda", "stderr": "0.010951545078475289"}, {"name": "e_mu", "stderr": "1.0e-8"}], "covariance": [], "correlation": []}, 
 {"statementName": "steady", "options": {"steadystate.nocheck": true}}, 
 {"statementName": "check"}, 
 {"statementName": "stoch_simul", "options": {"irf": 0, "nograph": true, "order": 1, "periods": 10200}}]
