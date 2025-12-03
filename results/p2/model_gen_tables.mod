@@ -1,4 +1,3 @@
-// Nombre archivo: 3_model.mod
 // Replicación Christiano & Eichenbaum (1992) - Alpha=1
 
 var y c k n g lambda dy_obs h_obs w;
@@ -7,19 +6,26 @@ varexo e_lambda e_mu;
 parameters beta theta delta gamma N rho_g g_ss lambda_ss;
 
 // Cargar parámetros estimados desde Octave
-beta = 0.9926375361451395; delta = 0.021; theta = 0.339; N = 1369.0;
-lambda_ss = 0.0037092270809439363; gamma = 3.3483073360077786; rho_g = 0.9958903794772136; g_ss = 0.011815215971179738;
+beta_val = 0.9926375361451395;
+delta_val = 0.021;
+theta_val = 0.339;
+N_val = 1369.0;
+
+gamma_val = 3.4703372342642944;
+lambda_val = 0.0029531622859703464;
+rho_g_val = 0.9073575890535783;
+g_ss_val = 182.85693368384798;
 
 
 // Asignación
-
-
-
-
-
-
-
-
+beta      = beta_val;
+theta     = theta_val;
+delta     = delta_val;
+gamma     = gamma_val;
+N         = N_val;
+rho_g     = rho_g_val;
+g_ss      = g_ss_val;
+lambda_ss = lambda_val;
 
 model;
     // --- Bloque del Modelo RBC Estacionario ---
@@ -57,9 +63,10 @@ end;
 // --- Bloque de Estado Estacionario ---
 
 initval;
-    lambda=0.0037092270809439363; g=0.011815215971179738; n=299.6345420764695; k=10569.528886907488; y=1002.725569817462; c=742.4432605220085;
-    dy_obs=0.37092270809439365; h_obs=5.702563538977429;
+    lambda=0.0029531622859703464; g=182.85693368384798; n=301.1659430582231; k=11017.183219082704; 
+    y=1020.3580531562362; c=574.3349742386871;
+    dy_obs=0.29531622859703466; h_obs=5.707661418676914;
 end;
 
-shocks; var e_lambda; stderr 0.010951545078475289; var e_mu; stderr 1.0e-8; end;
+shocks; var e_lambda; stderr 0.011866939916248454; var e_mu; stderr 1.0e-8; end;
 steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);

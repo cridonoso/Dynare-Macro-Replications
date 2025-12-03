@@ -3,7 +3,7 @@ using DataFrames
 using Printf
 using Statistics
 
-include(joinpath(@__DIR__, "..", "source", "plots.jl"))
+include(joinpath(@__DIR__, "..", "..", "source", "plots.jl"))
 using .Plotting
 
 # --- Configuración ---

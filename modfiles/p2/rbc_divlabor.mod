@@ -1,4 +1,3 @@
-// Nombre archivo: 3_model.mod
 // Replicación Christiano & Eichenbaum (1992) - Alpha=1
 
 var y c k n g lambda dy_obs h_obs w;
