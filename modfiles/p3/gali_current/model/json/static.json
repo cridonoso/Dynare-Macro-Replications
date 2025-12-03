@@ -1,33 +1,39 @@
 {"static_model": {"model_local_variables": [], "external_functions_temporary_terms_": [], "temporary_terms_": [], 
 "residuals":[
-{"residual": {"lhs": "pi", "rhs": "pi*betta+kappa*y_gap"}}
-, {"residual": {"lhs": "y_gap", "rhs": "y_gap+(-(1/siggma))*(i-pi-r_nat)"}}
-, {"residual": {"lhs": "r_nat", "rhs": "(-siggma)*psi_n_ya*(1-rho_a)*a+(1-rho_z)*z"}}
-, {"residual": {"lhs": "y_nat", "rhs": "psi_n_ya*a"}}
+{"residual": {"lhs": "y_gap", "rhs": "y_gap-1/sigma*(i-pi-r_nat)"}}
+, {"residual": {"lhs": "pi", "rhs": "beta*pi+(1-alpha)/(1-alpha+alpha*epsilon)*(1-theta)*(1-theta*beta)/theta*(sigma+(alpha+varphi)/(1-alpha))*y_gap"}}
+, {"residual": {"lhs": "i", "rhs": "pi*phi_pi+y_gap*phi_y"}}
+, {"residual": {"lhs": "r_nat", "rhs": "(1-rho_z)*z+a*(1-rho_a)*(1+varphi)/(alpha+varphi+(1-alpha)*sigma)*(-sigma)"}}
+, {"residual": {"lhs": "y_nat", "rhs": "(1+varphi)/(alpha+varphi+(1-alpha)*sigma)*a"}}
 , {"residual": {"lhs": "y", "rhs": "y_gap+y_nat"}}
-, {"residual": {"lhs": "yhat", "rhs": "y-STEADY_STATE(y)"}}
-, {"residual": {"lhs": "i", "rhs": "pi*phi_pi+yhat*phi_y"}}
-, {"residual": {"lhs": "a", "rhs": "rho_a*a+eps_a"}}
-, {"residual": {"lhs": "z", "rhs": "rho_z*z+eps_z"}}
+, {"residual": {"lhs": "n", "rhs": "(y-a)/(1-alpha)"}}
+, {"residual": {"lhs": "r_real", "rhs": "i-pi"}}
+, {"residual": {"lhs": "a", "rhs": "a*rho_a+e_a"}}
+, {"residual": {"lhs": "z", "rhs": "rho_z*z+e_z"}}
 
 ]
-, "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 9, "ncols": 9, "entries": [{"eq": 1, "col": 1, "var": "pi", "val": "1-betta"}
-, {"eq": 1, "col": 2, "var": "y_gap", "val": "(-kappa)"}
-, {"eq": 2, "col": 1, "var": "pi", "val": "(-(1/siggma))"}
-, {"eq": 2, "col": 6, "var": "i", "val": "1/siggma"}
-, {"eq": 2, "col": 7, "var": "r_nat", "val": "(-(1/siggma))"}
-, {"eq": 3, "col": 7, "var": "r_nat", "val": "1"}
-, {"eq": 3, "col": 8, "var": "a", "val": "(-((-siggma)*psi_n_ya*(1-rho_a)))"}
-, {"eq": 3, "col": 9, "var": "z", "val": "(-(1-rho_z))"}
-, {"eq": 4, "col": 3, "var": "y_nat", "val": "1"}
-, {"eq": 4, "col": 8, "var": "a", "val": "(-psi_n_ya)"}
-, {"eq": 5, "col": 2, "var": "y_gap", "val": "(-1)"}
-, {"eq": 5, "col": 3, "var": "y_nat", "val": "(-1)"}
-, {"eq": 5, "col": 4, "var": "y", "val": "1"}
-, {"eq": 6, "col": 5, "var": "yhat", "val": "1"}
-, {"eq": 7, "col": 1, "var": "pi", "val": "(-phi_pi)"}
-, {"eq": 7, "col": 5, "var": "yhat", "val": "(-phi_y)"}
-, {"eq": 7, "col": 6, "var": "i", "val": "1"}
-, {"eq": 8, "col": 8, "var": "a", "val": "1-rho_a"}
-, {"eq": 9, "col": 9, "var": "z", "val": "1-rho_z"}
-]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 9, "ncols": 81, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 9, "ncols": 729, "entries": []}}}
+, "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 10, "ncols": 10, "entries": [{"eq": 1, "col": 1, "var": "pi", "val": "(-(1/sigma))"}
+, {"eq": 1, "col": 5, "var": "r_nat", "val": "(-(1/sigma))"}
+, {"eq": 1, "col": 7, "var": "i", "val": "1/sigma"}
+, {"eq": 2, "col": 1, "var": "pi", "val": "1-beta"}
+, {"eq": 2, "col": 2, "var": "y_gap", "val": "(-((1-alpha)/(1-alpha+alpha*epsilon)*(1-theta)*(1-theta*beta)/theta*(sigma+(alpha+varphi)/(1-alpha))))"}
+, {"eq": 3, "col": 1, "var": "pi", "val": "(-phi_pi)"}
+, {"eq": 3, "col": 2, "var": "y_gap", "val": "(-phi_y)"}
+, {"eq": 3, "col": 7, "var": "i", "val": "1"}
+, {"eq": 4, "col": 5, "var": "r_nat", "val": "1"}
+, {"eq": 4, "col": 9, "var": "a", "val": "(-((1-rho_a)*(1+varphi)/(alpha+varphi+(1-alpha)*sigma)*(-sigma)))"}
+, {"eq": 4, "col": 10, "var": "z", "val": "(-(1-rho_z))"}
+, {"eq": 5, "col": 3, "var": "y_nat", "val": "1"}
+, {"eq": 5, "col": 9, "var": "a", "val": "(-((1+varphi)/(alpha+varphi+(1-alpha)*sigma)))"}
+, {"eq": 6, "col": 2, "var": "y_gap", "val": "(-1)"}
+, {"eq": 6, "col": 3, "var": "y_nat", "val": "(-1)"}
+, {"eq": 6, "col": 4, "var": "y", "val": "1"}
+, {"eq": 7, "col": 4, "var": "y", "val": "(-(1/(1-alpha)))"}
+, {"eq": 7, "col": 8, "var": "n", "val": "1"}
+, {"eq": 7, "col": 9, "var": "a", "val": "(-((-1)/(1-alpha)))"}
+, {"eq": 8, "col": 1, "var": "pi", "val": "1"}
+, {"eq": 8, "col": 6, "var": "r_real", "val": "1"}
+, {"eq": 8, "col": 7, "var": "i", "val": "(-1)"}
+, {"eq": 9, "col": 9, "var": "a", "val": "1-rho_a"}
+, {"eq": 10, "col": 10, "var": "z", "val": "1-rho_z"}
+]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 10, "ncols": 100, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 10, "ncols": 1000, "entries": []}}}

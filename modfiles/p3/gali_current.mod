@@ -1,86 +1,77 @@
-/*
-  Gali (2015) – Table 4.1 (Taylor rule, CURRENT).
-  Versión “Julia-safe”: sin scripting MATLAB; la tabla se arma en Julia.
+/* * Modelo: New Keynesian Model (Galí 2015, Cap. 4)
+ * Variante: Regla de Política Contemporánea (Current Looking)
+ */
 
-  Defines por línea de comando (sin espacios):
-    -DSHOCKCASE=1   -> Technology shock
-    -DSHOCKCASE=2   -> Demand shock
-    -DPHI_PI=1.5
-    -DPHI_Y=0.125
-*/
+// --- 1. Variables ---
+var pi      $ \pi $         (long_name='inflation')
+    y_gap   $ \tilde{y} $   (long_name='output gap')
+    y_nat   $ y^n $         (long_name='natural output')
+    y       $ y $           (long_name='output')
+    r_nat   $ r^n $         (long_name='natural interest rate')
+    r_real  $ r $           (long_name='real interest rate')
+    i       $ i $           (long_name='nominal interest rate')
+    n       $ n $           (long_name='hours')
+    a       $ a $           (long_name='technology shock')
+    z       $ z $           (long_name='preference shock');
 
-/* ===== Macros con valores por defecto (sobrescribibles desde Julia) ===== */
-@#ifndef SHOCKCASE
-  @#define SHOCKCASE = 1     // 1 = Technology, 2 = Demand
-@#endif
+varexo e_a  $ \varepsilon_a $ 
+       e_z  $ \varepsilon_z $;
 
-@#ifndef PHI_PI
-  @#define PHI_PI = 1.5
-@#endif
+// --- 2. Parámetros ---
+parameters beta sigma varphi alpha epsilon theta 
+           rho_a rho_z phi_pi phi_y;
 
-@#ifndef PHI_Y
-  @#define PHI_Y = 0.125
-@#endif
+// Calibración (Galí 2015, Tabla 4.1)
+beta    = 0.99;
+sigma   = 1.0;
+varphi  = 5.0;
+alpha   = 0.25;
+epsilon = 9.0;
+theta   = 0.75;
 
-/* ===== Variables ===== */
-var pi y_gap y_nat y yhat i r_nat a z;
-varexo eps_a eps_z;
+rho_a   = 0.90;
+rho_z   = 0.50;
 
-parameters betta siggma varphi alppha epsilon theta rho_a rho_z phi_pi phi_y;
-parameters Omega psi_n_ya lambda kappa;
+phi_pi  = 1.5;
+phi_y   = 0.125; 
 
-/* ===== Calibración (Galí 2015) ===== */
-betta  = 0.99;
-siggma = 1;
-varphi = 5;
-alppha = 1/4;
-epsilon = 9;
-theta   = 3/4;
-
-rho_a = 0.90;
-rho_z = 0.50;
-
-/* ===== Coeficientes de la regla de Taylor (desde macros) ===== */
-phi_pi = @{PHI_PI};
-phi_y  = @{PHI_Y};
-
-/* ===== Parámetros compuestos ===== */
-Omega    = (1-alppha)/(1-alppha+alppha*epsilon);
-psi_n_ya = (1+varphi)/(siggma*(1-alppha)+varphi+alppha);
-lambda   = (1-theta)*(1-betta*theta)/theta * Omega;
-kappa    = lambda*(siggma + (varphi+alppha)/(1-alppha));
-
-/* ===== Modelo lineal (desviaciones respecto al estado estacionario) ===== */
+// --- 3. Modelo Dinámico ---
 model(linear);
+    // Parámetros compuestos
+    # Omega = (1-alpha)/(1-alpha+alpha*epsilon);
+    # psi_n_ya = (1+varphi)/(sigma*(1-alpha)+varphi+alpha);
+    # lambda = (1-theta)*(1-beta*theta)/theta * Omega;
+    # kappa = lambda * (sigma + (varphi+alpha)/(1-alpha));
 
-  // Curva de Phillips NK
-  pi = betta*pi(+1) + kappa*y_gap;
+    // 1. Curva IS Dinámica
+    y_gap = y_gap(+1) - (1/sigma)*(i - pi(+1) - r_nat);
 
-  // IS en brechas (output gap)
-  y_gap = -(1/siggma)*( i - pi(+1) - r_nat ) + y_gap(+1);
+    // 2. Curva de Phillips Neokeynesiana (NKPC)
+    pi = beta * pi(+1) + kappa * y_gap;
 
-  // Tasa natural de interés y producto natural
-  r_nat = -siggma*psi_n_ya*(1-rho_a)*a + (1-rho_z)*z;
-  y_nat = psi_n_ya * a;
+    // 3. Regla de Política Monetaria (Contemporánea)
+    i = phi_pi * pi + phi_y * y_gap;
 
-  // Output total, desvío de output y regla de Taylor (corriente)
-  y    = y_nat + y_gap;
-  yhat = y - steady_state(y);    // en modelo lineal: yhat = y
-  i    = phi_pi*pi + phi_y*yhat;
+    // 4. Tasa de Interés Natural
+    r_nat = -sigma*psi_n_ya*(1-rho_a)*a + (1-rho_z)*z;
 
-  // Procesos de choques
-  a = rho_a*a(-1) + eps_a;
-  z = rho_z*z(-1) + eps_z;
+    // 5. Producto Natural
+    y_nat = psi_n_ya * a;
 
+    // 6. Definiciones Auxiliares
+    y = y_gap + y_nat;
+    n = (y - a)/(1-alpha);
+    r_real = i - pi(+1);
+
+    // 7. Procesos Exógenos
+    a = rho_a * a(-1) + e_a;
+    z = rho_z * z(-1) + e_z;
 end;
 
-steady;
-check;
-
+// --- 4. Shocks ---
 shocks;
-    var eps_a; stderr 0.01; 
-    var eps_z; stderr 0.01; 
+    var e_a; stderr 1.0; // Calibrado al 1% para análisis
+    var e_z; stderr 1.0;
 end;
 
-/* ===== Momentos teóricos (leídos desde Julia) ===== */
 stoch_simul(order=1, irf=0, nograph);

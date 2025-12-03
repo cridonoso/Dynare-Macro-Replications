@@ -5,11 +5,11 @@ using CSV
 using DataFrames
 
 # Cargar nuestro módulo de gráficos estandarizado
-include(joinpath(@__DIR__, "..", "source", "plots.jl"))
+include(joinpath(@__DIR__, "..", "..", "source", "plots.jl"))
 using .Plotting
 
 # --- Configuración ---
-project_root = joinpath(@__DIR__, "..")
+project_root = joinpath(@__DIR__, "..", "..")
 target_model = "1" # Modelo por defecto
 if !isempty(ARGS)
     target_model = ARGS[1]

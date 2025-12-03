@@ -6,6 +6,8 @@ function steady_state!(ys_::Vector{<: Real}, exo_::Vector{<: Real}, params::Vect
     ys_[7]=0.33;
     ys_[8]=0.28;
     ys_[6]=1-ys_[7]-ys_[8];
+    ys_[13]=0;
+    ys_[14]=0;
     MPK_M=1/params[1]-(1-params[2]);
     yM_kM_ratio=MPK_M/params[3];
     ys_[3]=ys_[7]*yM_kM_ratio^(1/(params[3]-1));
@@ -25,8 +27,6 @@ function steady_state!(ys_::Vector{<: Real}, exo_::Vector{<: Real}, params::Vect
     ys_[1]=(params[10]*ys_[9]^params[8]+(1-params[10])*ys_[10]^params[8])^(1/params[8]);
     RHS=MPL_M*ys_[9]^(params[8]-1)*params[10]*1/ys_[1]*ys_[1]^(1-params[8]);
     params[9]=ys_[6]*RHS;
-    ys_[13]=0;
-    ys_[14]=0;
     ys_[16]=ys_[11]/ys_[7];
     ys_[17]=ys_[11];
     ys_[18]=ys_[7];

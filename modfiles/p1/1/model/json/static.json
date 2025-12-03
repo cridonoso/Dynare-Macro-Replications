@@ -2,11 +2,11 @@
 "residuals":[
 {"residual": {"lhs": "1/c", "rhs": "1/c*beta*(theta*y/k+1-delta)"}}
 , {"residual": {"lhs": "gamma/(1-h)", "rhs": "y*1/c*(1-theta)/h"}}
-, {"residual": {"lhs": "c+invest", "rhs": "y"}}
 , {"residual": {"lhs": "y", "rhs": "lambda*k^theta*h^(1-theta)"}}
+, {"residual": {"lhs": "c+invest", "rhs": "y"}}
 , {"residual": {"lhs": "k", "rhs": "invest+k*(1-delta)"}}
-, {"residual": {"lhs": "log(lambda)", "rhs": "log(lambda)*rho+eps_a"}}
 , {"residual": {"lhs": "productivity", "rhs": "y/h"}}
+, {"residual": {"lhs": "log(lambda)", "rhs": "log(lambda)*rho+eps_a"}}
 
 ]
 , "external_functions_temporary_terms_jacobian": [], "temporary_terms_jacobian": [], "jacobian": {  "nrows": 7, "ncols": 7, "entries": [{"eq": 1, "col": 1, "var": "y", "val": "(-(1/c*beta*theta/k))"}
@@ -15,17 +15,17 @@
 , {"eq": 2, "col": 1, "var": "y", "val": "(-(1/c*(1-theta)/h))"}
 , {"eq": 2, "col": 2, "var": "c", "val": "(-(y*(1-theta)*(-1)/(c*c)/h))"}
 , {"eq": 2, "col": 5, "var": "h", "val": "gamma/((1-h)*(1-h))-(-(y*1/c*(1-theta)))/(h*h)"}
-, {"eq": 3, "col": 1, "var": "y", "val": "(-1)"}
-, {"eq": 3, "col": 2, "var": "c", "val": "1"}
-, {"eq": 3, "col": 4, "var": "invest", "val": "1"}
-, {"eq": 4, "col": 1, "var": "y", "val": "1"}
-, {"eq": 4, "col": 3, "var": "k", "val": "(-(h^(1-theta)*lambda*get_power_deriv(k,theta,1)))"}
-, {"eq": 4, "col": 5, "var": "h", "val": "(-(lambda*k^theta*get_power_deriv(h,1-theta,1)))"}
-, {"eq": 4, "col": 6, "var": "lambda", "val": "(-(k^theta*h^(1-theta)))"}
+, {"eq": 3, "col": 1, "var": "y", "val": "1"}
+, {"eq": 3, "col": 3, "var": "k", "val": "(-(h^(1-theta)*lambda*get_power_deriv(k,theta,1)))"}
+, {"eq": 3, "col": 5, "var": "h", "val": "(-(lambda*k^theta*get_power_deriv(h,1-theta,1)))"}
+, {"eq": 3, "col": 6, "var": "lambda", "val": "(-(k^theta*h^(1-theta)))"}
+, {"eq": 4, "col": 1, "var": "y", "val": "(-1)"}
+, {"eq": 4, "col": 2, "var": "c", "val": "1"}
+, {"eq": 4, "col": 4, "var": "invest", "val": "1"}
 , {"eq": 5, "col": 3, "var": "k", "val": "1-(1-delta)"}
 , {"eq": 5, "col": 4, "var": "invest", "val": "(-1)"}
-, {"eq": 6, "col": 6, "var": "lambda", "val": "1/lambda-rho*1/lambda"}
-, {"eq": 7, "col": 1, "var": "y", "val": "(-(1/h))"}
-, {"eq": 7, "col": 5, "var": "h", "val": "(-((-y)/(h*h)))"}
-, {"eq": 7, "col": 7, "var": "productivity", "val": "1"}
+, {"eq": 6, "col": 1, "var": "y", "val": "(-(1/h))"}
+, {"eq": 6, "col": 5, "var": "h", "val": "(-((-y)/(h*h)))"}
+, {"eq": 6, "col": 7, "var": "productivity", "val": "1"}
+, {"eq": 7, "col": 6, "var": "lambda", "val": "1/lambda-rho*1/lambda"}
 ]}, "external_functions_temporary_terms_hessian": [], "temporary_terms_hessian": [], "hessian": {  "nrows": 7, "ncols": 49, "entries": []}, "external_functions_temporary_terms_third_derivative": [], "temporary_terms_third_derivative": [], "third_derivative": {  "nrows": 7, "ncols": 343, "entries": []}}}

@@ -10,11 +10,11 @@ function SparseDynamicResid!(T::Vector{<: Real}, residual::AbstractVector{<: Rea
     residual[3] = (y[20]) - (params[1]*(params[5]*params[8]*(1-params[9])/y[28]+y[30]*(1-params[8])));
     residual[4] = (y[18]) - (params[9]*(1-y[13])+params[8]*(1-params[9])*y[9]);
     residual[5] = (y[19]) - (1-y[13]+(1-params[8])*y[9]);
-    residual[6] = (y[11]) - (y[12]+(1-params[2])*y[4]-y[14]);
-    residual[7] = (y[14]) - ((1-params[2])*y[4]+y[15]);
-    residual[8] = (y[12]) - (y[16]*y[4]^params[3]*y[13]^(1-params[3]));
-    residual[9] = (log(y[16])) - (params[4]*log(y[6])+x[1]);
-    residual[10] = (y[17]) - (y[12]/y[13]);
+    residual[6] = (y[12]) - (y[16]*y[4]^params[3]*y[13]^(1-params[3]));
+    residual[7] = (y[11]) - (y[12]+(1-params[2])*y[4]-y[14]);
+    residual[8] = (y[14]) - ((1-params[2])*y[4]+y[15]);
+    residual[9] = (y[17]) - (y[12]/y[13]);
+    residual[10] = (log(y[16])) - (params[4]*log(y[6])+x[1]);
 end
     return nothing
 end
