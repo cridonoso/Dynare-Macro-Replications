@@ -148,3 +148,45 @@ Los resultados de la simulación son procesados con el Filtro Hodrick-Prescott (
   cycle_y = hp_filter(log.(max.(vec_y, 1e-10)))
   # ... (aplicado a c, dk, n, etc.)
   ```
+
+---
+---
+---
+## Instrucciones de Ejecución
+
+Para reproducir los resultados (tablas y gráficos) desde cero, siga estos pasos. No se requiere experiencia previa en programación, solo una instalación funcional de Julia.
+
+### 1. Requisitos Previos
+* Tener instalado **Julia** (versión 1.9 o superior). Puede descargarlo [aquí](https://julialang.org/downloads/).
+* Tener la carpeta del proyecto descargada en su computadora.
+
+### 2. Configuración del Entorno (Solo la primera vez)
+Julia utiliza un sistema de entornos que garantiza que todos tengan las mismas versiones de las librerías. Para configurarlo:
+
+1.  Abra una terminal (o consola de comandos) y navegue hasta la carpeta raíz del proyecto (`/Dynare-Macro-Replications`).
+2.  Escriba `julia` y presione **Enter**. Esto abrirá la consola interactiva (REPL).
+3.  Presione la tecla **`]`** para entrar al "modo de package" (el indicador cambiará a color azul y dirá `pkg>`).
+4.  Escriba los siguientes comandos y presione Enter después de cada uno:
+    ```julia
+    activate .
+    instantiate
+    ```
+    *(Esto descargará e instalará automáticamente todas las librerías necesarias como Dynare, DataFrames y CSV según lo definido en el archivo `Project.toml`)*.
+5.  Presione la tecla **`Backspace`** (borrar) para salir del modo de paquetes y volver al modo normal `julia>`.
+
+### 3. Generación de Resultados
+Una vez configurado el entorno, ejecute los scripts en el siguiente orden copiando y pegando las líneas en la consola de Julia:
+
+**Paso 1: Descargar y Procesar Datos**
+Este script conecta con FRED, descarga las series, aplica el re-escalamiento y guarda los archivos base en `data/`.
+```julia
+include("presentation/p2/0_get_data.jl")
+```
+
+**Paso 2: Estimación y Simulación**
+Este script lee los datos procesados, estima los parámetros estructurales, simula el modelo y genera el código LaTeX de las tablas.
+```julia
+include("presentation/p2/1_estimate.jl")
+```
+
+Al finalizar, los resultados (tablas y gráficos) estarán disponibles en la carpeta `results/p2/`.
