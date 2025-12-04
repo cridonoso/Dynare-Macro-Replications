@@ -10,9 +10,8 @@ project_root = joinpath(@__DIR__, "..", "..")
 source_dir   = joinpath(project_root, "source")
 
 # Cargar librerías y módulos locales
-include(joinpath(source_dir, "utils.jl"))
 include(joinpath(source_dir, "simulation.jl"))
-include(joinpath(source_dir, "p1_logic.jl"))
+include(joinpath(@__DIR__, "..", "..", "source", "p1", "utils.jl"))
 using .HansenReplication
 
 # --- 2. Parámetros Globales ---

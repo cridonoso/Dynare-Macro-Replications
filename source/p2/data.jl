@@ -8,9 +8,7 @@ using CSV
 using Base.Filesystem
 
 
-
 function change_name(df, name, replace)
-    # Encuentra la columna por nombre (ignorando mayúsculas/minúsculas)
     date_col_idx = findfirst(x -> lowercase(string(x)) == name, names(df))
     if date_col_idx !== nothing
         rename!(df, names(df)[date_col_idx] => replace)
@@ -19,8 +17,6 @@ function change_name(df, name, replace)
 end
 
 function rename_data_column!(df::DataFrame, old_col_name, new_name::String)
-    # old_col_name debe ser el nombre actual de la columna (String o Symbol).
-    # new_name se convierte a Symbol para ser usado como el nuevo nombre de la columna.
     rename!(df, old_col_name => Symbol(new_name))
     return df
 end
@@ -148,42 +144,3 @@ function slice_by_date(df::DataFrame, start_date::Date, end_date::Date)
 end
 
 end # end module
-
-
-
-
-#     println(">>> Calculating Economic Variables (C&E 1992 definitions)...")
-    
-#     Y = Float64.(df_merged.Y_raw)
-#     C = Float64.(df_merged.C_raw)
-#     G = Float64.(df_merged.G_raw)
-#     H = Float64.(df_merged.H_raw)
-#     N = Float64.(df_merged.N_raw) # Población
-
-#     df_merged.y_pc = Y ./ N
-#     df_merged.c_pc = C ./ N
-#     df_merged.g_pc = G ./ N
-#     df_merged.n_pc = H ./ N 
-
-#     # 3. Variables para el modelo (Observables)
-#     # Inicializar con missings
-#     df_merged.dy_obs = Vector{Union{Float64, Missing}}(missing, rows)
-#     df_merged.h_obs  = Vector{Union{Float64, Missing}}(missing, rows)
-
-#     if rows > 1
-#         # Crecimiento Output (diff log * 100)
-#         # diff reduce el vector en 1, asignamos desde el índice 2
-#         dy = diff(log.(df_merged.y_pc)) .* 100
-#         df_merged.dy_obs[2:end] = dy
-#     end
-
-#     # Horas logarítmicas (desviadas de la media)
-#     h_log = log.(df_merged.n_pc)
-#     df_merged.h_obs = h_log .- mean(h_log)
-
-#     # Eliminar la primera fila que tiene missing por el diff
-#     dropmissing!(df_merged)
-    
-#     println(">>> Final rows for estimation: $(nrow(df_merged))")
-#     return df_merged
-# end

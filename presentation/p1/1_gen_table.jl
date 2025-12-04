@@ -8,7 +8,7 @@ source_dir   = joinpath(project_root, "source")
 results_path = joinpath(project_root, "results", "p1")
 
 # Cargar módulo de lógica específica
-include(joinpath(source_dir, "p1_logic.jl"))
+include(joinpath(@__DIR__, "..", "..", "source", "p1", "utils.jl"))
 using .HansenReplication
 
 println(">>> Generando Tabla Comparativa (LaTeX)...")

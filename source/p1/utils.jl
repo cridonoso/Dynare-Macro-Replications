@@ -141,4 +141,6 @@ function generate_comparison_table(models_data_dict)
     return latex_table
 end
 
+export hp_filter
+
 end # module

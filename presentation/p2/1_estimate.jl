@@ -3,7 +3,7 @@ using CSV
 using Base.Filesystem
 
 # Incluir y usar el nuevo módulo de replicación
-include("utils.jl")
+include(joinpath(@__DIR__, "..", "..", "source", "p2", "utils.jl"))
 using .ReplicationTools
 
 # =========================================================================================
@@ -76,11 +76,6 @@ sim_moments = ReplicationTools.run_simulation_and_moments(
 # =========================================================================================
 println(">>> [4/4] Generando Tablas LaTeX...")
 latex_output = ReplicationTools.generate_latex_tables(params_full, ss_vals, sim_moments)
-
-println("\n" * "="^80)
-println("CÓDIGO LATEX FINAL PARA COPIAR:")
-println("="^80)
-println(latex_output)
 
 # Guardar en archivo
 output_file = joinpath(results_dir, "tablas_finales.tex")

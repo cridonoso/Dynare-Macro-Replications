@@ -8,7 +8,7 @@ using SparseArrays
 using Printf
 using Dynare
 
-# Helper: HP Filter (requires SparseArrays and LinearAlgebra)
+
 function hp_filter(y, lam=1600.0)
     n = length(y); D = spzeros(n-2, n)
     for i in 1:n-2 
@@ -270,6 +270,63 @@ function generate_latex_tables(params_est, ss_vals, sim_moments)
     return latex_output
 end
 
-export estimate_parameters, solve_steady_state, run_simulation_and_moments, generate_latex_tables
+# =========================================================================================
+# 5. PROCESAMIENTO DE DATOS (NUEVO)
+# =========================================================================================
+function preprocess_usa_data(dataset::DataFrame)
+    # 1. Conversión de Tipos
+    data_cols = names(dataset, Not(:date)) 
+    for col_name in data_cols
+        dataset[!, Symbol(col_name)] = Float64.(dataset[!, Symbol(col_name)])
+    end
+
+    # 2. Transformación Per Cápita
+    transform!(dataset, 
+        [:Y_raw, :N_raw] => ByRow(/) => :y_pc,
+        [:C_raw, :N_raw] => ByRow(/) => :c_pc,
+        [:G_raw, :N_raw] => ByRow(/) => :g_pc,
+        [:H_raw, :N_raw] => ByRow(/) => :h_pc, # Horas por cápita
+        renamecols=false
+    )
+
+    # 3. Tasa de crecimiento del producto (dy = diff log * 100)
+    transform!(dataset, :y_pc => (y -> vcat(missing, diff(log.(y)) .* 100)) => :dy_obs)
+
+    # 4. Horas (log) per cápita (h_log - mean)
+    # Nota: Usamos skipmissing para calcular la media ignorando nans/missings previos
+    h_log_mean = mean(log.(skipmissing(dataset.h_pc)))
+    transform!(dataset, :h_pc => (h -> log.(h) .- h_log_mean) => :h_obs)
+
+    # 5. Horas laborales per cápita (level log)
+    transform!(dataset, :h_pc => (h -> log.(h)) => :h_log)
+
+    # 6. Limpieza Final
+    dropmissing!(dataset)
+    select!(dataset, :date, :dy_obs, :h_obs, :R_raw, :C_raw, :G_raw, :I_raw, :y_pc, :c_pc, :g_pc, :h_pc, :h_log)
+    
+    println(">>> Filas finales para estimación: $(nrow(dataset))")
+    
+    return dataset
+end
+
+function save_usa_data(dataset::DataFrame, output_file::String, output_gmm::String)
+    # 1. Guardar el dataset completo (con encabezados)
+    CSV.write(output_file, dataset)
+    
+    # 2. Crear y guardar el dataset específico para GMM (sin encabezados)
+    df_gmm = DataFrame(
+        y = dataset.y_pc, 
+        c = dataset.c_pc, 
+        g = dataset.g_pc, 
+        n = dataset.h_pc 
+    )
+    CSV.write(output_gmm, df_gmm, header=false)
+    
+    # 3. Mensajes de confirmación
+    println(">>>   Archivo 'data_usa.csv' guardado en: $(output_file)")
+    println(">>>   Archivo 'data_gmm.csv' guardado en: $(output_gmm)")
+end
+
+export estimate_parameters, solve_steady_state, run_simulation_and_moments, generate_latex_tables, preprocess_usa_data, save_usa_data
 
 end # end module ReplicationTools

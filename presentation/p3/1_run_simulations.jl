@@ -1,7 +1,3 @@
-# Script: 1_run_simulations.jl
-# Propósito: Ejecuta simulaciones Monte Carlo y guarda las pérdidas en CSV.
-#            Usa cálculo de pesos consistente con script teórico.
-
 using Dynare
 using CSV
 using DataFrames
@@ -14,7 +10,6 @@ source_dir    = joinpath(project_root, "source")
 N_SIMULATIONS = 10000
 T_PERIODS     = 200
 
-include(joinpath(source_dir, "utils.jl")) 
 include(joinpath(source_dir, "simulation.jl"))
 
 # --- 2. Cálculo de Pesos (Consistente con script 0) ---

@@ -4,9 +4,13 @@ using Dates
 using CSV
 
 include(joinpath(@__DIR__, "..", "..", "source", "plots.jl"))
-include(joinpath(@__DIR__, "..", "..", "source", "data.jl"))
+include(joinpath(@__DIR__, "..", "..", "source", "p2", "data.jl"))
+include(joinpath(@__DIR__, "..", "..", "source", "p2", "utils.jl"))
+
 using .Plotting
 using .DataTools
+using .ReplicationTools
+
 
 # --- Util Paths ---
 project_root = joinpath(@__DIR__, "..", "..")
@@ -37,53 +41,18 @@ dataset = innerjoin(fred_series, local_series, on = :date)
 
 # --- Filter by Dates --- 
 start_date = Date(1955, 7, 1)    # init
-end_date   = Date(1984, 1, 1)    # paper's end
-# end_date   = Date(2023, 10, 1) # own
 
-dataset = DataTools.slice_by_date(dataset, start_date, end_date)
-
-
-# ---- Preprocessing Pipeline ---
-
-# Data Type Conversion
-data_cols = names(dataset, Not(:date)) 
-for col_name in data_cols
-    dataset[!, Symbol(col_name)] = Float64.(dataset[!, Symbol(col_name)])
+# Verificar si el flag "--paper" está presente en los argumentos
+if "--paper" in ARGS
+    println(">>>   Modo Paper activado: Filtrando hasta 1984.")
+    end_date = Date(1984, 1, 1)  # paper's end
+else
+    println(">>>   Modo Actual (Default): Filtrando hasta 2023.")
+    end_date = Date(2023, 10, 1) # own
 end
 
-# PerCapita Transform
-transform!(dataset, 
-    [:Y_raw, :N_raw] => ByRow(/) => :y_pc,
-    [:C_raw, :N_raw] => ByRow(/) => :c_pc,
-    [:G_raw, :N_raw] => ByRow(/) => :g_pc,
-    [:H_raw, :N_raw] => ByRow(/) => :h_pc, # Horas por cápita
-    renamecols=false
-)
+# Preparar dataset de acuerdo al preprocesamiento del paper
+dataset = preprocess_usa_data(dataset)
 
-# Output growth rate per capita (dy = diff log * 100 ) 
-transform!(dataset, :y_pc => (y -> vcat(missing, diff(log.(y)) .* 100)) => :dy_obs)
-
-# Hours (log) per capita (h_log - mean)
-h_log_mean = mean(log.(skipmissing(dataset.h_pc)))
-transform!(dataset, :h_pc => (h -> log.(h) .- h_log_mean) => :h_obs)
-
-# Working Hours per capita (level log)
-transform!(dataset, :h_pc => (h -> log.(h)) => :h_log)
-
-# Remove missing values
-dropmissing!(dataset)
-
-# Saving Final DataFrame
-select!(dataset, :date, :dy_obs, :h_obs, :R_raw, :C_raw, :G_raw, :I_raw, :y_pc, :c_pc, :g_pc, :h_pc, :h_log)
-println(">>> Final rows for estimation: $(nrow(dataset))")
-
-CSV.write(output_file, dataset)
-df_gmm = DataFrame(
-    y = dataset.y_pc, 
-    c = dataset.c_pc, 
-    g = dataset.g_pc, 
-    n = dataset.h_pc 
-)
-CSV.write(output_gmm, df_gmm, header=false)
-println("Archivo 'data_usa.csv' guardado en $(output_file)")
-println("Archivo 'data_gmm.csv' guardado en $(output_gmm)")
+# Guardar datos procesados
+save_usa_data(dataset, output_file, output_gmm)

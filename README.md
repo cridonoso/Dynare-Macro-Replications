@@ -1,69 +1,82 @@
 # Tarea Computacional: Macroeconomía Dinámica
 
-Este repositorio contiene la resolución y replicación computacional de tres problemas clásicos de macroeconomía dinámica, utilizando **Julia** y **Dynare**. El proyecto abarca desde modelos de Ciclos Económicos Reales (RBC) hasta estimación econométrica (GMM) y análisis de bienestar en modelos Neokeynesianos.
+Este repositorio contiene la implementación computacional y replicación de tres modelos canónicos de macroeconomía dinámica (RBC y Neo-Keynesiano). El código ha sido estructurado modularmente para separar la lógica de simulación (`source`) de la ejecución de resultados (`presentation`).
 
-## 📚 Contenido del Repositorio
+## 📚 Estructura del Proyecto
 
-El trabajo se divide en tres módulos independientes. Haz clic en los enlaces para ver la documentación detallada y scripts de cada problema:
+La arquitectura del proyecto sigue el principio de separación de responsabilidades:
 
-| Módulo | Descripción | Referencia Principal |
+| Directorio | Propósito | Contenido Principal |
 | :--- | :--- | :--- |
-| [**Problema 1: RBC y Mercado Laboral**](./presentation/p1/README.md) | Comparación de 5 modelos RBC con fricciones (trabajo indivisible, ocio no separable, producción doméstica). | Hansen (1985) |
-| [**Problema 2: Estimación GMM**](./presentation/p2/README.md) | Procesamiento de datos (FRED), estimación de parámetros estructurales vía GMM y validación del modelo. | Christiano & Eichenbaum (1992) |
-| [**Problema 3: Política Monetaria**](./presentation/p3/README.md) | Análisis de bienestar comparando reglas de Taylor Contemporáneas vs. Forward-Looking. | Galí (2015), Cap. 4 |
+| **`presentation/`** | **Ejecución** | Scripts numerados (e.g., `0_run...`, `1_gen...`) que generan los resultados finales. Aquí es donde el usuario interactúa. |
+| **`source/`** | **Lógica** | Módulos reutilizables (`simulation.jl`, `plots.jl`) y librerías específicas por problema (`HansenReplication`, `ReplicationTools`). |
+| **`modfiles/`** | **Teoría** | Archivos `.mod` de Dynare que definen las condiciones de primer orden (CPO) y el estado estacionario de cada modelo. |
+| **`data/`** | **Insumos** | Datos macroeconómicos crudos (FRED) y procesados (`data_gmm.csv`) listos para la estimación. |
+| **`results/`** | **Salida** | Tablas en LaTeX, gráficos PDF y datos simulados generados automáticamente. |
 
----
+## ⚙️ Requisitos de Software
 
-## 🛠️ Requisitos e Instalación
+Para ejecutar este código, necesitas tener instalado lo siguiente:
 
-Para ejecutar este código, necesitas tener instalado **Julia** (v1.9+) y configurar el entorno del proyecto.
+1.  **Julia (v1.9 o superior)**
+    * Es el lenguaje de programación principal.
+    * 📥 **[Descargar e Instrucciones de Instalación](https://julialang.org/downloads/)**
 
-### 1. Prerrequisitos
-* **Julia:** [Descargar e instalar](https://julialang.org/downloads/).
-* **Dynare:** El código utiliza `Dynare.jl`. Asegúrate de que tu sistema pueda ejecutar comandos de Dynare o tener los binarios accesibles si usas la configuración manual.
+2.  **Dynare (v4.6 o superior)**
+    * Es el "motor" externo que resuelve los modelos económicos estocásticos.
+    * ⚠️ **Importante sobre el "PATH":** Para que Julia pueda comunicarse con Dynare, este debe estar accesible en el *PATH* de tu sistema.
 
-### 2. Configuración del Entorno (Primera vez)
-Este proyecto utiliza `Project.toml` para gestionar dependencias exactas. Sigue estos pasos para instalar todas las librerías necesarias (`DataFrames`, `Plots`, `Dynare`, etc.) automáticamente:
+3.  **Configuración del Entorno (Paquetes)**
+    Este proyecto utiliza un entorno reproducible. Para instalar automáticamente todas las dependencias exactas (versiones de paquetes) que se utilizaron, sigue estos pasos:
 
-1.  Abre una terminal en la carpeta raíz del repositorio:
-    ```bash
-    cd tarea_computacional
-    ```
-2.  Inicia Julia:
-    ```bash
-    julia
-    ```
-3.  Ingresa al modo de paquetes presionando la tecla `]`.
-4.  Activa e instancia el entorno:
+    * Abre una terminal en la carpeta raíz del proyecto (`tarea_computacional/`).
+    * Inicia Julia escribiendo `julia`.
+    * Entra al modo de paquetes presionando la tecla `]`.
+    * Ejecuta los siguientes comandos para activar el entorno e instalar todo:
+
     ```julia
-    pkg> activate .
-    pkg> instantiate
+    (v1.9) pkg> activate .
+      Activating project at `~/ruta/a/tarea_computacional`
+
+    (tarea_computacional) pkg> instantiate
     ```
-    *(Esto descargará e instalará todas las versiones correctas de los paquetes).*
-5.  Presiona `Backspace` para volver al terminal estándar de Julia (`julia>`).
+    * Esto descargará e instalará automáticamente paquetes como `Dynare`, `DataFrames`, `Plots`, etc., basándose en los archivos `Project.toml` y `Manifest.toml`.
+    * Presiona `Backspace` para volver al modo normal de Julia.
+
+## 🚀 Guía Rápida de Ejecución
+
+Cada problema (`p1`, `p2`, `p3`) es autocontenido. A continuación se presentan dos formas de ejecutar el código.
+
+### Opción A: Desde el REPL de Julia (⚡ Recomendado)
+Esta es la forma más rápida y eficiente. Al mantener la sesión abierta, evitas que Julia tenga que recompilar los paquetes en cada ejecución.
+
+1.  **Iniciar:** Abre una terminal en la carpeta raíz del proyecto e inicia Julia cargando el entorno:
+    ```bash
+    julia --project=.
+    ```
+2.  **Ejecutar:** Usa el comando `include` para correr los scripts secuencialmente.
+    *(Ejemplo para el Problema 2: Estimación con Gasto de Gobierno)*
+
+    ```julia
+    # 1. Descarga y procesamiento de datos
+    include("presentation/p2/0_get_data.jl")
+
+    # 2. Estimación y tablas
+    include("presentation/p2/1_estimate.jl")
+    ```
+
+### Opción B: Desde la Terminal (Shell)
+Útil para ejecuciones rápidas o automatización, pero **más lento** debido a la latencia de inicio y compilación de Julia en cada comando.
+
+1.  Abre una terminal y navega a la carpeta raiz del proyecto
+2.  Ejecuta los scripts apuntando al entorno raíz (`--project=.`):
+    ```bash
+    # Paso 1
+    julia --project="." 0_get_data.jl
+
+    # Paso 2
+    julia --project="." 1_estimate.jl
+    ```
 
 ---
-
-## 📂 Estructura de Carpetas
-
-* **`data/`**: Contiene los datos crudos (CSV) y procesados (especialmente para el Problema 2).
-* **`modfiles/`**: Archivos `.mod` de Dynare con la estructura matemática de los modelos, organizados por problema (`p1`, `p2`, `p3`).
-* **`presentation/`**: **Punto de entrada de ejecución.** Contiene los scripts principales (`.jl`) y los `README` específicos de cada tarea.
-* **`results/`**: Carpeta de salida donde se guardan automáticamente las tablas (.tex), gráficos (.pdf) y datos simulados (.csv).
-* **`source/`**: Código fuente compartido y módulos auxiliares (`utils.jl`, `simulation.jl`, `plots.jl`) que contienen la lógica pesada para mantener los scripts de presentación limpios.
-
----
-
-## 🚀 Ejecución Rápida
-
-Una vez configurado el entorno, puedes ejecutar cualquier script llamándolo desde la raíz. Por ejemplo, para correr el análisis del **Problema 1**:
-
-```julia
-# Desde la consola de Julia en la raíz del proyecto:
-include("presentation/p1/0_run_analysis.jl")
-```
-## Authors
-- Cristobal Donoso
-- Roberto Flores
-- Francisco Medina
-- Nicolas Moreno
+*Curso: Macroeconomía - Doctorado en Economía*

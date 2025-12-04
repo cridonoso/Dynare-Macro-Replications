@@ -1,6 +1,3 @@
-# Nombre: p1_plot_simulation.jl
-# Tarea:  Genera un gráfico con las series de tiempo de una simulación única.
-
 using CSV
 using DataFrames
 
@@ -19,7 +16,7 @@ res_path = joinpath(project_root, "results", "p1", target_model)
 sim_file = joinpath(res_path, "item4_single_simulation.csv")
 
 if !isfile(sim_file)
-    error("Archivo de simulación no encontrado: $sim_file. Ejecuta p1_simulate.jl primero.")
+    error("Archivo de simulación no encontrado: $sim_file. Ejecuta 0_run_analysis.jl primero.")
 end
 
 println(">>> Leyendo datos de simulación del modelo $target_model...")
