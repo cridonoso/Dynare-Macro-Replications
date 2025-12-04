@@ -96,43 +96,42 @@ function solve_steady_state(params_est; delta_val=0.021, max_iter=10000, tol=1e-
 end
 
 # =========================================================================================
-# 3. SIMULACIÓN Y MOMENTOS (TABLA 3)
+# 3. SIMULACIÓN Y MOMENTOS (CORREGIDO: Flatten Data + Small Sample)
 # =========================================================================================
 function run_simulation_and_moments(mod_base, params_full, ss_vals, results_dir)
     
     mod_scen = joinpath(results_dir, "model_gen_tables.mod")
-    sigma_mu_sim = 1e-8 # Varianza de choque de G muy pequeña
-
-    # 1. Construir Bloques de Parámetros e Inicialización
     
-    # a) Parámetros (Bloque @#include con valores *_val)
-    # Utilizamos params_full para obtener todos los valores.
+    # Usar la varianza estimada del gobierno
+    sigma_mu_sim = params_full.sigma_mu_hat 
+
+    # 1. Construir Bloques
     params_def_str = """
     beta_val = $(params_full.beta_val);
     delta_val = $(params_full.delta_val);
     theta_val = $(params_full.theta_val);
     N_val = $(params_full.N_total);
-
     gamma_val = $(params_full.gamma_hat);
     lambda_val = $(params_full.lambda_hat);
     rho_g_val = $(params_full.rho_g_hat);
     g_ss_val = $(params_full.g_ss_hat);
     """
     
-    # b) Valores Iniciales (initval block)
     initval_block = """
     initval;
-        lambda=$(params_full.lambda_hat); g=$(params_full.g_ss_hat); n=$(ss_vals.n_ss); k=$(ss_vals.k_ss); 
+        lambda=$(params_full.lambda_hat); g=$(params_full.g_ss_hat); 
+        n=$(ss_vals.n_ss); k=$(ss_vals.k_ss); 
         y=$(ss_vals.y_ss); c=$(ss_vals.c_ss);
         dy_obs=$(params_full.lambda_hat*100); h_obs=$(log(ss_vals.n_ss));
     end;
     """
     
-    # c) Shocks (Bloque shocks)
-    # FIX CRÍTICO: Usar params_full para la desviación estándar del choque lambda
     shocks_block = "shocks; var e_lambda; stderr $(params_full.sigma_lambda_hat); var e_mu; stderr $(sigma_mu_sim); end;"
 
-    # 2. Escribir archivo modificado (remplazando bloques existentes)
+    # 2. Configuración de Dynare (Small Sample: 120 periodos, 500 réplicas)
+    dynare_command = "steady(nocheck); check; stoch_simul(order=1, periods=120, replic=500, irf=0, nograph);"
+
+    # Escribir archivo
     mod_content = read(mod_base, String)
     mod_content = replace(mod_content, r"^\s*@#include.*$"m => params_def_str) 
     mod_content = replace(mod_content, r"steady_state_model;.*?end;"s => "") 
@@ -144,48 +143,67 @@ function run_simulation_and_moments(mod_base, params_full, ss_vals, results_dir)
         println(io, mod_content) 
         println(io, initval_block) 
         println(io, shocks_block)
-        println(io, "steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);")
+        println(io, dynare_command)
     end
 
     # 3. Ejecutar Dynare
     context = Dynare.dynare(mod_scen)
     
-    # Manejo de errores: Si Dynare falla, el vector de simulaciones estará vacío.
-    if isempty(context.results.model_results) || isempty(context.results.model_results[1].simulations)
-        error("Dynare falló la solución o simulación del modelo. Revise el archivo .log en $(results_dir) para más detalles.")
+    # 4. Procesamiento de Resultados
+    all_sims = context.results.model_results[1].simulations
+    if isempty(all_sims)
+        error("Error: No se generaron simulaciones.")
     end
-    
-    sims = context.results.model_results[1].simulations[1]
-    get_d(var) = Float64.(collect(getproperty(sims.data, Symbol(var)))[201:end])
 
-    # 4. Cálculo de Momentos
-    vec_y = get_d("y"); vec_c = get_d("c"); vec_g = get_d("g"); vec_n = get_d("n")
-    vec_dk = vec_y .- vec_c .- vec_g
-    vec_prod = vec_y ./ vec_n
-    
-    # FIX: Usar params_full para el parámetro theta_val
-    vec_w = (1 - params_full.theta_val) .* vec_prod 
+    # Acumuladores
+    m_sig_y, m_sig_c_y, m_sig_dk_y, m_sig_n_y, m_sig_g_y, m_sig_w_prod, m_corr = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    N_sims = length(all_sims)
 
-    # Aplicar HP Filter
-    # ... (el resto del cálculo de momentos) ...
+    for i in 1:N_sims
+        sim_data = all_sims[i].data
+        
+        # --- CORRECCIÓN AQUÍ: Agregado vec() para aplanar matrices ---
+        get_d(var) = vec(Float64.(collect(getproperty(sim_data, Symbol(var)))))
 
-    cycle_y = hp_filter(log.(max.(vec_y, 1e-10)))
-    cycle_c = hp_filter(log.(max.(vec_c, 1e-10)))
-    cycle_dk = hp_filter(log.(max.(vec_dk, 1e-10)))
-    cycle_n = hp_filter(log.(max.(vec_n, 1e-10)))
-    cycle_g = hp_filter(log.(max.(vec_g, 1e-10)))
-    cycle_prod = hp_filter(log.(max.(vec_prod, 1e-10)))
-    cycle_w = hp_filter(log.(max.(vec_w, 1e-10)))
+        vec_y = get_d("y"); vec_c = get_d("c"); vec_g = get_d("g"); vec_n = get_d("n")
+        vec_dk = vec_y .- vec_c .- vec_g 
+        vec_prod = vec_y ./ vec_n
+        vec_w = (1 - params_full.theta_val) .* vec_prod 
 
+        # HP Filter
+        cycle_y = hp_filter(log.(max.(vec_y, 1e-10)))
+        cycle_c = hp_filter(log.(max.(vec_c, 1e-10)))
+        cycle_dk = hp_filter(log.(max.(vec_dk, 1e-10)))
+        cycle_n = hp_filter(log.(max.(vec_n, 1e-10)))
+        cycle_g = hp_filter(log.(max.(vec_g, 1e-10)))
+        cycle_prod = hp_filter(log.(max.(vec_prod, 1e-10)))
+        cycle_w = hp_filter(log.(max.(vec_w, 1e-10)))
+
+        # Estadísticos
+        std_y = std(cycle_y)
+        
+        m_sig_y += std_y
+        m_sig_c_y += std(cycle_c)/std_y
+        m_sig_dk_y += std(cycle_dk)/std_y
+        m_sig_n_y += std(cycle_n)/std_y
+        m_sig_g_y += std(cycle_g)/std_y
+        m_sig_w_prod += std(cycle_w)/std(cycle_prod)
+        
+        # Correlación (Ahora vec() asegura que devuelva un escalar)
+        m_corr += cor(cycle_prod, cycle_n)
+    end
+
+    # Promedios
     sim_moments = (
-        sig_y = std(cycle_y),
-        sig_c_y = std(cycle_c)/std(cycle_y),
-        sig_dk_y = std(cycle_dk)/std(cycle_y),
-        sig_n_y = std(cycle_n)/std(cycle_y),
-        sig_g_y = std(cycle_g)/std(cycle_y),
-        sig_w_prod = std(cycle_w)/std(cycle_prod),
-        corr_prod_n = cor(cycle_prod, cycle_n)
+        sig_y = m_sig_y / N_sims,
+        sig_c_y = m_sig_c_y / N_sims,
+        sig_dk_y = m_sig_dk_y / N_sims,
+        sig_n_y = m_sig_n_y / N_sims,
+        sig_g_y = m_sig_g_y / N_sims,
+        sig_w_prod = m_sig_w_prod / N_sims,
+        corr_prod_n = m_corr / N_sims
     )
+    
     return sim_moments
 end
 

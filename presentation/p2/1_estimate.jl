@@ -1,6 +1,7 @@
 using DataFrames
 using CSV
 using Base.Filesystem
+using Statistics
 
 # Incluir y usar el nuevo módulo de replicación
 include(joinpath(@__DIR__, "..", "..", "source", "p2", "utils.jl"))

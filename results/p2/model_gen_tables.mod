@@ -10,7 +10,6 @@ beta_val = 0.9926375361451395;
 delta_val = 0.021;
 theta_val = 0.339;
 N_val = 1369.0;
-
 gamma_val = 3.3427445168450696;
 lambda_val = 0.0036578873720433175;
 rho_g_val = 0.9960029157452728;
@@ -63,10 +62,11 @@ end;
 // --- Bloque de Estado Estacionario ---
 
 initval;
-    lambda=0.0036578873720433175; g=208.65794744839732; n=301.69876812558994; k=10668.384673025885; 
+    lambda=0.0036578873720433175; g=208.65794744839732; 
+    n=301.69876812558994; k=10668.384673025885; 
     y=1010.4703064779537; c=539.6418183663617;
     dy_obs=0.36578873720433175; h_obs=5.709429063046271;
 end;
 
-shocks; var e_lambda; stderr 0.010874758001813799; var e_mu; stderr 1.0e-8; end;
-steady(nocheck); check; stoch_simul(order=1, periods=10200, irf=0, nograph);
+shocks; var e_lambda; stderr 0.010874758001813799; var e_mu; stderr 0.008014227742999066; end;
+steady(nocheck); check; stoch_simul(order=1, periods=120, replic=500, irf=0, nograph);
