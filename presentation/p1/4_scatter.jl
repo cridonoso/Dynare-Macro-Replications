@@ -88,7 +88,7 @@ function main()
             push!(plots_list_EN, p_en)
 
         catch e
-            println("❌ Error en filtro HP (Modelo $model_id): $e")
+            println(" Error en filtro HP (Modelo $model_id): $e")
             push!(plots_list_ES, plot(framestyle=:none))
             push!(plots_list_EN, plot(framestyle=:none))
         end

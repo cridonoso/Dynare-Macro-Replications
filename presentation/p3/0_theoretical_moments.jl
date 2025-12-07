@@ -1,7 +1,3 @@
-# Script: 0_theoretical_moments.jl
-# Propósito: Replica la Tabla 4.1 de Galí (2015) utilizando momentos teóricos asintóticos.
-#            Nota: Calcula la pérdida en unidades naturales (sin escalar por 100^2).
-
 using Dynare
 using Printf
 using DataFrames
@@ -61,11 +57,9 @@ println("\n>>> Calculando Momentos Asintóticos...")
 for m in models_list
     var_y, var_pi = get_moments(m, project_root)
     
-    # Desviaciones en porcentaje para reporte visual (opcional)
     sd_y_pct  = sqrt(var_y) * 100
     sd_pi_pct = sqrt(var_pi) * 100
-    
-    # Cálculo de Pérdida (Sin escalar por 10000, unidades crudas)
+
     loss = 0.5 * (weight_y * var_y + weight_pi * var_pi)
     
     push!(df_results, (m, sd_y_pct, sd_pi_pct, loss))

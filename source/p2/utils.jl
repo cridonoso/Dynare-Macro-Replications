@@ -162,7 +162,6 @@ function run_simulation_and_moments(mod_base, params_full, ss_vals, results_dir)
     for i in 1:N_sims
         sim_data = all_sims[i].data
         
-        # --- CORRECCIÓN AQUÍ: Agregado vec() para aplanar matrices ---
         get_d(var) = vec(Float64.(collect(getproperty(sim_data, Symbol(var)))))
 
         vec_y = get_d("y"); vec_c = get_d("c"); vec_g = get_d("g"); vec_n = get_d("n")
@@ -188,8 +187,7 @@ function run_simulation_and_moments(mod_base, params_full, ss_vals, results_dir)
         m_sig_n_y += std(cycle_n)/std_y
         m_sig_g_y += std(cycle_g)/std_y
         m_sig_w_prod += std(cycle_w)/std(cycle_prod)
-        
-        # Correlación (Ahora vec() asegura que devuelva un escalar)
+
         m_corr += cor(cycle_prod, cycle_n)
     end
 
@@ -224,7 +222,6 @@ function generate_latex_tables(params_est, ss_vals, sim_moments)
     # Momentos Simulación
     (; sig_y, sig_c_y, sig_dk_y, sig_n_y, sig_g_y, sig_w_prod, corr_prod_n) = sim_moments
 
-    # === CORRECCIÓN: Se usa `raw"..."` para evitar problemas con `\` y `$` de LaTeX ===
     latex_output = string(
         raw"""
     \begin{table}[H]

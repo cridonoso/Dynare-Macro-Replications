@@ -324,7 +324,7 @@ function plot_p3_combined_histograms(lang, all_data, scenarios_list, output_dir)
     colors = Dict("gali_current" => :dodgerblue, "gali_forward" => :orange)
     subplots = []
 
-    # 1. Generar los 3 Subplots (SIN leyenda)
+    # 1. Generar los 3 Subplots
     for (scen_id, scen_key) in scenarios_list
         t = titles_map[scen_key][lang]
         p = plot(title = t, titlefontsize = 11, legend = false) 
