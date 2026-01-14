@@ -1,5 +1,9 @@
 # Tarea Computacional: Macroeconomía Dinámica
 
+<span style="color: red;">
+⚠️ **ADVERTENCIA:** Se han identificado algunos problemas tras la revisión con el profesor y ayudantes que serán corregidos próximamente. Por ahora, los resultados no replican exactamente el de los autores respectivos.
+</span>
+
 Este repositorio contiene la implementación computacional y replicación de tres modelos canónicos de macroeconomía dinámica (RBC y Neo-Keynesiano). El código ha sido estructurado modularmente para separar la lógica de simulación (`source`) de la ejecución de resultados (`presentation`).
 
 ## 📚 Estructura del Proyecto
